@@ -13,7 +13,7 @@ An election simulator for the 16th Malaysian General Election (GE16). Take contr
 
 ## 🎮 How to Play
 
-1. **Start the Game**: Open the game https://gourean.github.io/ge16/
+1. **Start the Game**: Open the game url https://gourean.github.io/ge16/
 2. **Pick your Faction**: Choose a historical or custom coalition.
 3. **Draft your Manifesto**: Select policies that resonate with voters or serve your political agenda.
 4. **Campaign**: Move through the map, engage with constituencies, and optimize your popularity.
