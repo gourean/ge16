@@ -45,3 +45,34 @@ export const seatMatchesDemographic = (seat: Seat, demo: string): boolean => {
   // we don't have granular per-seat data for them yet.
   return false;
 };
+
+/**
+ * Normalizes popularity values to ensure they sum to exactly 100% and stay within [0, 100].
+ */
+export const normalizePopularity = (tracker: Record<string, number>): Record<string, number> => {
+  const categories = Object.keys(tracker);
+  const newTracker: Record<string, number> = {};
+  
+  // 1. Clamp all values to [0, 100]
+  let sum = 0;
+  categories.forEach(cat => {
+    const val = Math.max(0, Math.min(100, tracker[cat]));
+    newTracker[cat] = val;
+    sum += val;
+  });
+
+  // 2. Normalize to sum = 100
+  if (sum > 0) {
+    const multiplier = 100 / sum;
+    categories.forEach(cat => {
+      newTracker[cat] = newTracker[cat] * multiplier;
+    });
+  } else {
+    // Edge case: everything is zero (shouldn't happen)
+    // Default to "Others" or Undecided if available
+    const fallback = categories.includes('Others') ? 'Others' : categories[0];
+    newTracker[fallback] = 100;
+  }
+
+  return newTracker;
+};

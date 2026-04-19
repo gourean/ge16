@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { GameEvent } from '../data/events';
 import { gameEvents } from '../data/events';
+import { normalizePopularity } from '../utils/campaignUtils';
 
 export interface GameNotification {
   id: string;
@@ -298,8 +299,10 @@ export const useGameStore = create<GameState>((set, get) => ({
         const targetStates = Array.from(new Set(state.seats.map(s => s.state))).sort(() => 0.5 - Math.random()).slice(0, 3);
         newSeats = state.seats.map(s => {
             if (targetStates.includes(s.state)) {
-                const newTracker = { ...s.popularityTracker };
-                newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 2.0); // Slightly higher penalty
+                const newTracker = normalizePopularity({
+                    ...s.popularityTracker,
+                    [myCoal]: Math.max(0, s.popularityTracker[myCoal] - 2.0)
+                });
                 return { ...s, popularityTracker: newTracker };
             }
             return s;
@@ -347,8 +350,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       return false; // Not enough resources or no actions left
     }
     
-    // Apply new popularities via effect function
-    const newSeats = effect([...state.seats]);
+    // Apply new popularities via effect function and normalize
+    const newSeats = effect([...state.seats]).map(s => ({
+      ...s,
+      popularityTracker: normalizePopularity(s.popularityTracker)
+    }));
     
     set({
       seats: newSeats,
@@ -370,7 +376,17 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       const choice = currentEvent.choices[choiceIndex];
       if (choice) {
-          choice.effect(state, set);
+          const wrappedSet = (update: Partial<GameState> | ((state: GameState) => Partial<GameState>)) => {
+              const actualUpdate = typeof update === 'function' ? update(get()) : update;
+              if (actualUpdate.seats) {
+                  actualUpdate.seats = actualUpdate.seats.map(s => ({
+                      ...s,
+                      popularityTracker: normalizePopularity(s.popularityTracker)
+                  }));
+              }
+              set(actualUpdate);
+          };
+          choice.effect(state, wrappedSet as any);
       }
       
       set({ 

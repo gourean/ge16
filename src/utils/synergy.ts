@@ -1,6 +1,7 @@
 import { type Party, historicalCoalitions } from '../data/parties';
 import type { Seat } from '../store/gameStore';
 import { manifestoItems } from '../data/manifesto';
+import { normalizePopularity } from './campaignUtils';
 
 /**
  * Classifies seats based on state and demographics.
@@ -81,27 +82,24 @@ export function applyManifestoToSeats(
       }
     }
 
-    const newF1 = Math.max(0, Math.min(100, seat.basePopularity.Faction1 + f1Impact));
-    const totalOthers = seat.basePopularity.Faction2 + seat.basePopularity.Faction3 + seat.basePopularity.Others;
-    
-    // Redistribute other factions to maintain ~100% total
-    const multiplier = totalOthers > 0 ? (100 - newF1) / totalOthers : 1;
+    const newTracker = normalizePopularity({
+      Faction1: seat.basePopularity.Faction1 + f1Impact,
+      Faction2: seat.popularityTracker.Faction2,
+      Faction3: seat.popularityTracker.Faction3,
+      Others: seat.popularityTracker.Others,
+    });
 
     return {
       ...seat,
       basePopularity: {
         ...seat.basePopularity,
-        Faction1: newF1,
-        Faction2: seat.basePopularity.Faction2 * multiplier,
-        Faction3: seat.basePopularity.Faction3 * multiplier,
-        Others: seat.basePopularity.Others * multiplier,
+        Faction1: newTracker.Faction1,
+        Faction2: newTracker.Faction2,
+        Faction3: newTracker.Faction3,
+        Others: newTracker.Others,
       },
       popularityTracker: {
-        ...seat.popularityTracker,
-        Faction1: newF1,
-        Faction2: seat.popularityTracker.Faction2 * multiplier,
-        Faction3: seat.popularityTracker.Faction3 * multiplier,
-        Others: seat.popularityTracker.Others * multiplier,
+        ...newTracker
       }
     };
   });
@@ -366,13 +364,12 @@ export function applyFactionsToSeats(
     const adj3 = raw3 * syn3;
 
     // Normalize so they sum to ~100
-    const total = adj1 + adj2 + adj3 + rawOthers;
-    const newBase = {
-      Faction1: total > 0 ? (adj1 / total) * 100 : 0,
-      Faction2: total > 0 ? (adj2 / total) * 100 : 0,
-      Faction3: total > 0 ? (adj3 / total) * 100 : 0,
-      Others: total > 0 ? (rawOthers / total) * 100 : 0,
-    };
+    const newBase = normalizePopularity({
+      Faction1: adj1,
+      Faction2: adj2,
+      Faction3: adj3,
+      Others: rawOthers,
+    });
 
     return {
       ...seat,
