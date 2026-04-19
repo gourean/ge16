@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useGameStore } from './store/gameStore';
 import PreCampaign from './pages/PreCampaign';
 import Manifesto from './pages/Manifesto';
@@ -43,7 +43,7 @@ function App() {
   }, [loadInitialSeats]);
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <PhaseRouter />
       <Routes>
         <Route path="/" element={<PreCampaign />} />
@@ -58,7 +58,7 @@ function App() {
       <IntroSplash />
       <AudioManager />
       <SettingsMenu />
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
