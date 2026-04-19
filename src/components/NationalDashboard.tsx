@@ -55,7 +55,7 @@ export default function NationalDashboard() {
         <div style={{ 
           color, 
           fontWeight: '800', 
-          fontSize: '1.4rem', 
+          fontSize: '2.2rem', 
           fontFamily: 'var(--font-heading)',
           textShadow: `0 0 10px ${color}44`
         }}>
@@ -124,31 +124,14 @@ export default function NationalDashboard() {
         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Campaign Phase</span>
       </div>
 
-      <div className="flex-center" style={{ gap: 'max(1rem, 2vw)', flex: 1, padding: '0 1rem' }}>
+      <div className="flex-center" style={{ gap: 'max(3rem, 5vw)', flex: 1, padding: '0 2rem' }}>
         {renderFactionBlock('Faction1', factionColors.Faction1)}
         {renderFactionBlock('Faction2', factionColors.Faction2)}
         {renderFactionBlock('Faction3', factionColors.Faction3)}
         
-        <div style={{ textAlign: 'center', opacity: 0.8 }}>
-          <div style={{ color: factionColors.Undecided, fontWeight: '800', fontSize: '1.2rem' }}>{seatCounts.Undecided}</div>
-          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Undecided</div>
-        </div>
-        
-        <div style={{ width: '1px', height: '40px', background: 'rgba(255,255,255,0.1)', margin: '0 0.5rem' }}></div>
-
-        <div className="flex-center" style={{ gap: '1.5rem' }}>
-          <div className="flex-column" style={{ alignItems: 'center' }}>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Campaign Funds</span>
-            <div style={{ fontWeight: '800', fontSize: '1.2rem', color: 'var(--accent-gold)', fontFamily: 'var(--font-heading)' }}>
-              RM {(playerState.funds / 1000000).toFixed(1)}M
-            </div>
-          </div>
-          <div className="flex-column" style={{ alignItems: 'center' }}>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Pol. Capital</span>
-            <div style={{ fontWeight: '800', fontSize: '1.2rem', color: 'var(--accent-teal)', fontFamily: 'var(--font-heading)' }}>
-              {playerState.politicalCapital} PC
-            </div>
-          </div>
+        <div style={{ textAlign: 'center', opacity: 0.9 }}>
+          <div style={{ color: factionColors.Undecided, fontWeight: '800', fontSize: '1.8rem' }}>{seatCounts.Undecided}</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Undecided</div>
         </div>
       </div>
 

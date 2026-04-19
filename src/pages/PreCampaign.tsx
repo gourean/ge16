@@ -9,7 +9,7 @@ import { playClick } from '../utils/sfx';
 export default function PreCampaign() {
   const { selectCoalition, setGamePhase, seats, loadInitialSeats, pushNotification } = useGameStore();
   
-  const [gameMode, setGameMode] = useState<'HISTORICAL' | 'CUSTOM'>('CUSTOM');
+  const [gameMode, setGameMode] = useState<'HISTORICAL' | 'CUSTOM'>('HISTORICAL');
   const [selectedParties, setSelectedParties] = useState<string[]>([]);
   const [allianceName, setAllianceName] = useState('My Custom Alliance');
   const [opponentMode, setOpponentMode] = useState<'1v1' | '3-corner'>('1v1');
@@ -309,53 +309,53 @@ export default function PreCampaign() {
                 )
               })}
             </div>
-            
-            <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-              <div className="flex-between" style={{ marginBottom: '1rem' }}>
-                 <h4>Demographic Swings (Post-GE15)</h4>
-                 <button onClick={() => { setExplicitSwings([...explicitSwings, { id: Date.now().toString(), demographic: 'Malay-Majority', from: 'BN', to: 'PN', amount: 5 }]); playClick(); }} className="glass-button" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Plus size={16} /> Add Swing
-                 </button>
-              </div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                  Adjust the base historical popularity before the campaign begins. (E.g. Swing 10% from BN to PN in Malay-Majority seats).
-              </p>
-              {explicitSwings.length === 0 && (
-                 <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic' }}>No swings applied. Starting with standard GE15 baseline.</div>
-              )}
-              {explicitSwings.map((swing, idx) => (
-                 <div key={swing.id} style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                    <select value={swing.demographic} onChange={e => { const newS = [...explicitSwings]; newS[idx].demographic = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
-                       <option value="Malay-Majority">Malay-Majority</option>
-                       <option value="Chinese-Majority">Chinese-Majority</option>
-                       <option value="Mixed">Mixed</option>
-                       <option value="Bumiputera-Sabah/Sarawak">Bumiputera-Sabah/Sarawak</option>
-                    </select>
-                    <span style={{ color: 'var(--text-muted)' }}>Swing</span>
-                    <input type="number" value={swing.amount} onChange={e => { const newS = [...explicitSwings]; newS[idx].amount = Number(e.target.value); setExplicitSwings(newS); }} style={{ width: '60px', padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }} />
-                    <span style={{ color: 'var(--text-muted)' }}>% from</span>
-                    <select value={swing.from} onChange={e => { const newS = [...explicitSwings]; newS[idx].from = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
-                       <option value="PH">PH</option>
-                       <option value="PN">PN</option>
-                       <option value="BN">BN</option>
-                    </select>
-                    <span style={{ color: 'var(--text-muted)' }}>to</span>
-                    <select value={swing.to} onChange={e => { const newS = [...explicitSwings]; newS[idx].to = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
-                       <option value="PH">PH</option>
-                       <option value="PN">PN</option>
-                       <option value="BN">BN</option>
-                    </select>
-                    <button onClick={() => {
-                      setExplicitSwings(explicitSwings.filter(s => s.id !== swing.id))
-                      playClick();
-                    }} style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', padding: '0.5rem' }}>
-                       <Trash2 size={18} />
-                    </button>
-                 </div>
-              ))}
-            </div>
           </div>
         )}
+
+        <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-glass)', marginBottom: '2rem' }}>
+          <div className="flex-between" style={{ marginBottom: '1rem' }}>
+             <h4>Demographic Swings (Post-GE15)</h4>
+             <button onClick={() => { setExplicitSwings([...explicitSwings, { id: Date.now().toString(), demographic: 'Malay-Majority', from: 'BN', to: 'PN', amount: 5 }]); playClick(); }} className="glass-button" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Plus size={16} /> Add Swing
+             </button>
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+              Adjust the base historical popularity before the campaign begins. (E.g. Swing 10% from BN to PN in Malay-Majority seats).
+          </p>
+          {explicitSwings.length === 0 && (
+             <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic' }}>No swings applied. Starting with standard GE15 baseline.</div>
+          )}
+          {explicitSwings.map((swing, idx) => (
+             <div key={swing.id} style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <select value={swing.demographic} onChange={e => { const newS = [...explicitSwings]; newS[idx].demographic = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
+                   <option value="Malay-Majority">Malay-Majority</option>
+                   <option value="Chinese-Majority">Chinese-Majority</option>
+                   <option value="Mixed">Mixed</option>
+                   <option value="Bumiputera-Sabah/Sarawak">Bumiputera-Sabah/Sarawak</option>
+                </select>
+                <span style={{ color: 'var(--text-muted)' }}>Swing</span>
+                <input type="number" value={swing.amount} onChange={e => { const newS = [...explicitSwings]; newS[idx].amount = Number(e.target.value); setExplicitSwings(newS); }} style={{ width: '60px', padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }} />
+                <span style={{ color: 'var(--text-muted)' }}>% from</span>
+                <select value={swing.from} onChange={e => { const newS = [...explicitSwings]; newS[idx].from = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
+                   <option value="PH">PH</option>
+                   <option value="PN">PN</option>
+                   <option value="BN">BN</option>
+                </select>
+                <span style={{ color: 'var(--text-muted)' }}>to</span>
+                <select value={swing.to} onChange={e => { const newS = [...explicitSwings]; newS[idx].to = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
+                   <option value="PH">PH</option>
+                   <option value="PN">PN</option>
+                   <option value="BN">BN</option>
+                </select>
+                <button onClick={() => {
+                  setExplicitSwings(explicitSwings.filter(s => s.id !== swing.id))
+                  playClick();
+                }} style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', padding: '0.5rem' }}>
+                   <Trash2 size={18} />
+                </button>
+             </div>
+          ))}
+        </div>
 
         <div className="flex-center">
           <button 

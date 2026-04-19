@@ -26,6 +26,7 @@ export const availableParties: Party[] = [
   { id: 'MUDA', name: 'MUDA', color: '#181116', ideology: 'Progressive', demographic: 'Urban Mixed', baseStrength: 2, tags: ['Reformist', 'Progressive', 'Clean'] },
   { id: 'PEJUANG', name: 'PEJUANG', color: '#2b3086', ideology: 'Conservative', demographic: 'Rural Malay', baseStrength: 2, tags: ['Nationalist', 'Conservative'] },
   { id: 'KDM', name: 'KDM', color: '#2e8b57', ideology: 'Regional', demographic: 'East Malaysia', baseStrength: 2, tags: ['Regional', 'Decentralist'] },
+  { id: 'GERAKAN', name: 'GERAKAN', color: '#9C27B0', ideology: 'Centrist', demographic: 'Urban Mixed', baseStrength: 4, tags: ['Centrist', 'Multicultural', 'Liberal'] },
 ];
 
 export interface HistoricalCoalition {
@@ -37,7 +38,7 @@ export interface HistoricalCoalition {
 
 export const historicalCoalitions: HistoricalCoalition[] = [
   { id: 'PH', name: 'Pakatan Harapan', parties: ['PKR', 'DAP', 'AMANAH', 'MUDA', 'WARISAN'], color: '#ed1c24' },
-  { id: 'PN', name: 'Perikatan Nasional', parties: ['PAS', 'BERSATU'], color: '#006a71' },
+  { id: 'PN', name: 'Perikatan Nasional', parties: ['PAS', 'BERSATU', 'GERAKAN'], color: '#006a71' },
   { id: 'BN', name: 'Barisan Nasional', parties: ['UMNO', 'MCA', 'MIC', 'GPS', 'GRS'], color: '#0033a0' },
 ];
 

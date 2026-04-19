@@ -95,6 +95,7 @@ export interface GameState {
   // Event state
   activeEvent: GameEvent | null;
   hasTriggeredEventThisTurn: boolean;
+  triggeredEventIds: string[];
   resolveEvent: (choiceIndex: number) => void;
   
   factionColors: Record<string, string>;
@@ -123,6 +124,22 @@ const initialPlayerState = {
   manifestoTags: []
 } as PlayerState;
 
+const STORAGE_KEY = 'ge16_audio_settings';
+
+const loadSavedAudioSettings = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.error('Failed to load audio settings', e);
+  }
+  return {
+    volume: 50,
+    sfxVolume: 50,
+    isMuted: false
+  };
+};
+
 export const useGameStore = create<GameState>((set, get) => ({
   gamePhase: 'PRE_CAMPAIGN',
   turn: 1,
@@ -149,24 +166,23 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   activeEvent: null,
   hasTriggeredEventThisTurn: false,
+  triggeredEventIds: [],
   exitConfirmationOpen: false,
   actionsRemaining: 3,
   
   isSettingsOpen: false,
-  audioSettings: {
-    volume: 50,
-    sfxVolume: 50,
-    isMuted: false
-  },
+  audioSettings: loadSavedAudioSettings(),
   notificationQueue: [],
   hasInteractionStarted: false,
   
   setGamePhase: (phase) => set({ gamePhase: phase }),
   setExitConfirmationOpen: (open) => set({ exitConfirmationOpen: open }),
   setSettingsOpen: (open) => set({ isSettingsOpen: open }),
-  setAudioSettings: (settings) => set((state) => ({
-    audioSettings: { ...state.audioSettings, ...settings }
-  })),
+  setAudioSettings: (settings) => set((state) => {
+    const newSettings = { ...state.audioSettings, ...settings };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
+    return { audioSettings: newSettings };
+  }),
   
   pushNotification: (notif) => set((state) => ({
     notificationQueue: [...state.notificationQueue, { ...notif, id: Date.now().toString() }]
@@ -184,6 +200,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     playerState: initialPlayerState,
     activeEvent: null,
     hasTriggeredEventThisTurn: false,
+    triggeredEventIds: [],
     exitConfirmationOpen: false,
     actionsRemaining: 3,
     factionColors: {
@@ -271,20 +288,56 @@ export const useGameStore = create<GameState>((set, get) => ({
       return { gamePhase: 'POST_ELECTION' };
     }
     
-    // 30% chance to trigger an event if one hasn't triggered this turn
+    let newSeats = [...state.seats];
+    let notifications = [...state.notificationQueue];
+    const myCoal = state.playerState.currentCoalition;
+
+    // --- STABILITY VOLATILITY LOGIC ---
+    // If stability < 70, 20% chance of a "Gaffe/Friction" hit (Lowered threshold for more volatility)
+    if (state.playerState.stability < 70 && Math.random() < 0.20) {
+        const targetStates = Array.from(new Set(state.seats.map(s => s.state))).sort(() => 0.5 - Math.random()).slice(0, 3);
+        newSeats = state.seats.map(s => {
+            if (targetStates.includes(s.state)) {
+                const newTracker = { ...s.popularityTracker };
+                newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 2.0); // Slightly higher penalty
+                return { ...s, popularityTracker: newTracker };
+            }
+            return s;
+        });
+
+        notifications.push({
+            id: `stability_hit_${Date.now()}`,
+            title: "Internal Friction",
+            message: "Conflicting coalition messages have caused a slight drop in public trust in key states.",
+            type: "warning"
+        });
+    }
+
+    // --- TRIGGER EVENT LOGIC ---
+    // 50% chance to trigger an event (Increased for more frequent dilemmas)
     let nextEvent = null;
     let willTrigger = false;
-    if (Math.random() < 0.3) {
-        willTrigger = true;
-        const randomIdx = Math.floor(Math.random() * gameEvents.length);
-        nextEvent = gameEvents[randomIdx];
+    if (Math.random() < 0.50) {
+        // Filter available events based on their condition AND if they haven't been triggered yet
+        const available = gameEvents.filter(ev => 
+            (!ev.condition || ev.condition(state)) && 
+            !state.triggeredEventIds.includes(ev.id)
+        );
+        
+        if (available.length > 0) {
+            willTrigger = true;
+            const randomIdx = Math.floor(Math.random() * available.length);
+            nextEvent = available[randomIdx];
+        }
     }
 
     return { 
         turn: state.turn + 1,
+        seats: newSeats,
         activeEvent: nextEvent,
         hasTriggeredEventThisTurn: willTrigger,
-        actionsRemaining: 3
+        actionsRemaining: 3,
+        notificationQueue: notifications
     };
   }),
   
@@ -320,6 +373,9 @@ export const useGameStore = create<GameState>((set, get) => ({
           choice.effect(state, set);
       }
       
-      set({ activeEvent: null }); // clear the event after resolution
+      set({ 
+          activeEvent: null, 
+          triggeredEventIds: [...state.triggeredEventIds, currentEvent.id] 
+      }); // clear the event and mark as triggered
   }
 }));

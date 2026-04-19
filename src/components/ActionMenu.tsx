@@ -6,7 +6,9 @@ import {
   ShieldCheck, 
   Users, 
   CloudLightning,
-  Smartphone
+  Smartphone,
+  X,
+  Target
 } from 'lucide-react';
 import { getSeatsInSameState, getThematicManifestoEffect } from '../utils/campaignUtils';
 import { playClick } from '../utils/sfx';
@@ -15,7 +17,9 @@ type ActionType = 'CERAMAH' | 'SMEAR' | 'SOCIAL_MEDIA' | 'GROUND_WAR' | 'CYBER_A
 
 export default function ActionMenu({ activeSeatId }: { activeSeatId: string | null }) {
   const [open, setOpen] = useState(false);
-  const { playAction, nextTurn, playerState, actionsRemaining, pushNotification } = useGameStore();
+  const { playAction, nextTurn, playerState, seats, actionsRemaining, pushNotification, turn } = useGameStore();
+
+  const activeSeat = activeSeatId ? seats.find(s => s.id === activeSeatId || s.id.replace('.', '') === activeSeatId) : null;
 
   const handleAction = (type: ActionType) => {
     playClick();
@@ -119,14 +123,20 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
     });
 
     if (success) {
-      if (type === 'MANIFESTO_THEMATIC') {
-        pushNotification({
-          title: "Thematic Rally",
-          message: "Campaign Rally executed! Focusing on your core manifesto pillars.",
-          type: "success",
-          duration: 3000
-        });
-      }
+      let successMsg = "Action executed successfully!";
+      if (type === 'CERAMAH' && activeSeat) successMsg = `Ceramah mobilized supporters across ${activeSeat.state}!`;
+      else if (type === 'SMEAR' && activeSeat) successMsg = `Smear campaign executed in ${activeSeat.name}!`;
+      else if (type === 'GROUND_WAR' && activeSeat) successMsg = `Ground operation in ${activeSeat.name} completed.`;
+      else if (type === 'SOCIAL_MEDIA') successMsg = "Social Blitz boosted national urban sentiment!";
+      else if (type === 'CYBER_ATTACK') successMsg = "Cyber attack disrupted opponent communications!";
+      else if (type === 'MANIFESTO_THEMATIC') successMsg = "Policy Rally energized the base!";
+
+      pushNotification({
+        title: "Success",
+        message: successMsg,
+        type: "success",
+        duration: 3000
+      });
       setOpen(false);
     } else {
       pushNotification({
@@ -150,58 +160,132 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
   };
 
   return (
-    <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+    <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', width: '95%' }}>
       
       {open && (
-        <div className="glass-panel animate-fade-in" style={{ padding: '1rem', display: 'flex', gap: '0.8rem', marginBottom: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div className="glass-panel animate-fade-in" style={{ padding: '1.5rem', marginBottom: '10px', width: 'fit-content', maxWidth: '1400px', position: 'relative' }}>
           
-          <ActionBtn 
-            icon={<Megaphone size={20} />} 
-            label="Ceramah" 
-            sub="RM 0.5M | State" 
-            onClick={() => handleAction('CERAMAH')} 
-          />
-          
-          <ActionBtn 
-            icon={<AlertTriangle size={20} />} 
-            label="Smear" 
-            sub="RM 0.2M | Local" 
-            onClick={() => handleAction('SMEAR')} 
-          />
+          <div className="flex-between" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem' }}>
+            <div className="flex-column">
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-blue)', textTransform: 'uppercase', letterSpacing: '2px' }}>Strategic Action Plan</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Deploy resources to sway voters</span>
+                {activeSeat && (
+                  <>
+                    <span style={{ color: 'var(--border-glass)' }}>|</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--accent-teal)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Target size={12} /> Targeting: {activeSeat.name}, {activeSeat.state}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            <button 
+              className="glass-button flex-center" 
+              onClick={() => setOpen(false)}
+              style={{ padding: '0.5rem', borderRadius: '50%', width: '32px', height: '32px' }}
+            >
+              <X size={18} />
+            </button>
+          </div>
 
-          <ActionBtn 
-            icon={<Smartphone size={20} />} 
-            label="Social Blitz" 
-            sub="RM 1.0M | Urban" 
-            onClick={() => handleAction('SOCIAL_MEDIA')} 
-          />
+          <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'nowrap', justifyContent: 'center' }}>
+            <ActionBtn 
+              icon={<Megaphone size={20} />} 
+              label="Ceramah" 
+              sub="RM 0.5M | 5 PC" 
+              desc={!activeSeat ? "Target Required" : "Statewide rally"}
+              onClick={() => handleAction('CERAMAH')} 
+              disabled={!activeSeat}
+            />
+            
+            <ActionBtn 
+              icon={<AlertTriangle size={20} />} 
+              label="Smear" 
+              sub="RM 0.2M | 15 PC" 
+              desc={!activeSeat ? "Target Required" : "Targeted damage"}
+              onClick={() => handleAction('SMEAR')} 
+              disabled={!activeSeat}
+            />
 
-          <ActionBtn 
-            icon={<Users size={20} />} 
-            label="Ground War" 
-            sub="RM 0.1M | Rural" 
-            onClick={() => handleAction('GROUND_WAR')} 
-          />
+            <ActionBtn 
+              icon={<Smartphone size={20} />} 
+              label="Social Blitz" 
+              sub="RM 1.0M | 20 PC" 
+              desc="National urban boost"
+              onClick={() => handleAction('SOCIAL_MEDIA')} 
+            />
 
-          <ActionBtn 
-            icon={<CloudLightning size={20} />} 
-            label="Cyber Attack" 
-            sub="RM 0.3M | National" 
-            onClick={() => handleAction('CYBER_ATTACK')} 
-          />
+            <ActionBtn 
+              icon={<Users size={20} />} 
+              label="Ground War" 
+              sub="RM 0.1M | 10 PC" 
+              desc={!activeSeat ? "Target Required" : "Localized rural"}
+              onClick={() => handleAction('GROUND_WAR')} 
+              disabled={!activeSeat}
+            />
 
-          <ActionBtn 
-            icon={<ShieldCheck size={20} />} 
-            label="Policy Rally" 
-            sub="RM 1.5M | National" 
-            onClick={() => handleAction('MANIFESTO_THEMATIC')} 
-          />
+            <ActionBtn 
+              icon={<CloudLightning size={20} />} 
+              label="Cyber Attack" 
+              sub="RM 0.3M | 15 PC" 
+              desc="National disruption"
+              onClick={() => handleAction('CYBER_ATTACK')} 
+            />
+
+            <ActionBtn 
+              icon={<ShieldCheck size={20} />} 
+              label="Policy Rally" 
+              sub="RM 1.5M | 25 PC" 
+              desc="Manifesto boost"
+              onClick={() => handleAction('MANIFESTO_THEMATIC')} 
+            />
+          </div>
 
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+      {/* Campaign Dashboard Bottom Bar */}
+      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: '1200px' }}>
         
+        {/* Resources & Stability - Centered Status Bar */}
+        <div className="glass-panel" style={{ padding: '0.5rem 1.5rem', display: 'flex', gap: '2rem', alignItems: 'center', background: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.1)' }}>
+          <div className="flex-column" style={{ alignItems: 'flex-start' }}>
+            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Available Funds</span>
+            <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+              RM {(playerState.funds / 1000000).toFixed(1)}M
+            </span>
+          </div>
+          
+          <div style={{ width: '1px', height: '28px', background: 'var(--border-glass)' }}></div>
+          
+          <div className="flex-column" style={{ alignItems: 'flex-start' }}>
+            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Political Capital</span>
+            <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-teal)' }}>
+              {playerState.politicalCapital} PC
+            </span>
+          </div>
+
+          <div style={{ width: '1px', height: '28px', background: 'var(--border-glass)' }}></div>
+
+          {/* Stability Widget */}
+          <div className="flex-column" style={{ alignItems: 'flex-start', minWidth: '120px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '2px' }}>
+                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Stability</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: playerState.stability < 50 ? '#ff5252' : '#00e676' }}>{Math.round(playerState.stability)}%</span>
+            </div>
+            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ 
+                  width: `${playerState.stability}%`, 
+                  height: '100%', 
+                  background: playerState.stability < 40 ? '#ff5252' : playerState.stability < 70 ? '#ffab00' : '#00c853',
+                  boxShadow: playerState.stability < 50 ? '0 0 10px rgba(255, 82, 82, 0.4)' : 'none',
+                  transition: 'width 1s cubic-bezier(0.34, 1.56, 0.64, 1)'
+              }} />
+            </div>
+          </div>
+        </div>
+
         <div className="glass-panel" style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '100px' }}>
           <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Actions Left</span>
           <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: actionsRemaining > 0 ? 'var(--accent-teal)' : '#ff5252' }}>
@@ -210,20 +294,29 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
         </div>
 
         <button 
-          className="glass-button" 
+          className={`glass-button ${open ? 'active' : ''}`}
           onClick={() => {
             setOpen(!open);
             playClick();
           }}
-          style={{ padding: '1rem 2rem', fontSize: '1.1rem', minWidth: '140px' }}
+          style={{ padding: '1rem 2rem', fontSize: '1.1rem', minWidth: '160px' }}
         >
-          {open ? 'Close' : 'Plan Action'}
+          {open ? 'Back to Map' : 'Plan Action'}
         </button>
         
         <button 
           className="glass-button active pulse-glow" 
           onClick={() => {
-            nextTurn();
+            pushNotification({
+              title: "Day Complete",
+              message: `Day ${turn} strategy finalized. Actions replenished.`,
+              type: "info",
+              duration: 1500
+            });
+            // Delay nextTurn so that it doesn't overlap at all with the summary
+            setTimeout(() => {
+              nextTurn();
+            }, 1600);
             playClick();
           }}
           style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}
@@ -236,12 +329,24 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
   );
 }
 
-function ActionBtn({ icon, label, sub, onClick }: { icon: any, label: string, sub: string, onClick: () => void }) {
+function ActionBtn({ icon, label, sub, desc, onClick, disabled }: { icon: any, label: string, sub: string, desc?: string, onClick: () => void, disabled?: boolean }) {
   return (
-    <button className="glass-button flex-column flex-center action-btn-hover" onClick={onClick} style={{ width: '110px', padding: '0.8rem', flexShrink: 0 }}>
-      <div style={{ marginBottom: '8px', color: 'var(--accent-blue)' }}>{icon}</div>
-      <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>{label}</span>
-      <span style={{ fontSize: '0.6rem', color: 'var(--accent-gold)', marginTop: '2px' }}>{sub}</span>
+    <button 
+      className={`glass-button flex-column flex-center ${disabled ? 'disabled-action' : 'action-btn-hover'}`} 
+      onClick={disabled ? undefined : onClick} 
+      style={{ 
+        width: '115px', 
+        padding: '1rem 0.5rem', 
+        flexShrink: 0,
+        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        filter: disabled ? 'grayscale(1)' : 'none'
+      }}
+    >
+      <div style={{ marginBottom: '8px', color: disabled ? 'var(--text-muted)' : 'var(--accent-blue)' }}>{icon}</div>
+      <span style={{ fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap' }}>{label}</span>
+      <span style={{ fontSize: '0.65rem', color: disabled ? 'var(--text-muted)' : 'var(--accent-gold)', marginTop: '4px' }}>{sub}</span>
+      {desc && <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '4px', textAlign: 'center', lineHeight: '1.2' }}>{desc}</span>}
     </button>
   );
 }
