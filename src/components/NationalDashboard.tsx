@@ -4,7 +4,7 @@ import { LogOut, FastForward, Info } from 'lucide-react';
 import { playClick } from '../utils/sfx';
 
 export default function NationalDashboard() {
-  const { turn, playerState, seats, factionNames, factionParties, factionColors, setExitConfirmationOpen, setGamePhase } = useGameStore();
+  const { turn, seats, factionNames, factionParties, factionColors, setExitConfirmationOpen, setGamePhase } = useGameStore();
   const [activeFactionPop, setActiveFactionPop] = useState<string | null>(null);
 
   const handleExit = () => {

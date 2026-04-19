@@ -17,7 +17,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { ChevronRight, AlertCircle, TrendingUp, Zap, LogOut } from 'lucide-react';
+import { ChevronRight, AlertCircle, LogOut } from 'lucide-react';
 
 ChartJS.register(
   RadialLinearScale,
