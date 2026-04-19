@@ -9,6 +9,7 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
   const zoomRef = useRef<d3.ZoomBehavior<any, any>>(null);
   const svgRef  = useRef<d3.Selection<any, any, any, any>>(null);
   const seats = useGameStore(state => state.seats);
+  const factionColors = useGameStore(state => state.factionColors);
   const [svgLoaded, setSvgLoaded] = useState(false);
 
   // List of seats that are enclaves (physically inside another seat)
@@ -166,8 +167,6 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
     // One-time pass: Ensure enclaves (like Putrajaya P125) are at the very top of the 
     // seats-layer so they are never covered by their container seats.
     zoomGroup.selectAll('.enclave-seat').raise();
-
-    // Color code based on leading coalition
     seats.forEach(seat => {
       let leader = 'Others';
       let firstPop = -1;
@@ -187,7 +186,6 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
         leader = 'Undecided';
       }
 
-      const factionColors = useGameStore.getState().factionColors;
       let fill = 'var(--bg-card)';
       if (leader === 'Faction1') fill = factionColors.Faction1;
       else if (leader === 'Faction2') fill = factionColors.Faction2;
@@ -201,7 +199,7 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
          .style('opacity', 1.0);
     });
 
-  }, [seats, svgLoaded, onSeatClick]);
+  }, [seats, svgLoaded, onSeatClick, factionColors]);
 
   // ── Navigation Helpers ────────────────────────────────────────────────────
   // Button pan: short smooth transition is fine for discrete clicks

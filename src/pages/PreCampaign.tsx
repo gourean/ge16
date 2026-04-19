@@ -241,7 +241,7 @@ export default function PreCampaign() {
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Theme Color</label>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {['#ed1c24', '#0033a0', '#006a71', '#008000', '#00adef', '#f37021', '#8b5cf6'].map(c => (
+                  {['#ed1c24', '#0033a0', '#003153', '#008000', '#00adef', '#f37021', '#8b5cf6'].map(c => (
                     <div 
                       key={c}
                       onClick={() => {

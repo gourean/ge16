@@ -38,7 +38,6 @@ export default function NationalDashboard() {
     }
     seatCounts[leader as keyof typeof seatCounts]++;
   });
-
   const renderFactionBlock = (factionKey: string, color: string) => {
     const parties = factionParties[factionKey] || [];
     const isPopped = activeFactionPop === factionKey;
@@ -53,11 +52,11 @@ export default function NationalDashboard() {
         }}
       >
         <div style={{ 
-          color, 
+          color: 'var(--text-primary)', 
           fontWeight: '800', 
-          fontSize: '2.2rem', 
+          fontSize: '2.5rem', 
           fontFamily: 'var(--font-heading)',
-          textShadow: `0 0 10px ${color}44`
+          textShadow: `0 2px 10px rgba(0,0,0,0.5)`
         }}>
           {seatCounts[factionKey as keyof typeof seatCounts]}
         </div>
@@ -65,12 +64,19 @@ export default function NationalDashboard() {
           fontSize: '0.75rem', 
           color: isPopped ? 'var(--text-primary)' : 'var(--text-muted)', 
           whiteSpace: 'nowrap',
-          fontWeight: '600',
+          fontWeight: '700',
           letterSpacing: '0.02em',
           display: 'flex',
           alignItems: 'center',
-          gap: '4px'
+          gap: '8px'
         }}>
+          <div style={{ 
+            width: '10px', 
+            height: '10px', 
+            borderRadius: '50%', 
+            backgroundColor: color,
+            boxShadow: `0 0 8px ${color}`
+          }} />
           {factionNames[factionKey]}
           <Info size={10} style={{ opacity: 0.5 }} />
         </div>
@@ -87,11 +93,11 @@ export default function NationalDashboard() {
               padding: '0.8rem',
               zIndex: 100,
               minWidth: '200px',
-              border: `1px solid ${color}44`,
+              border: `2px solid ${color}88`,
               boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 15px ${color}22`
             }}
           >
-            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', letterSpacing: '1px' }}>Component Parties</div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px', fontWeight: 'bold' }}>Component Parties</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
               {parties.map(p => (
                 <span key={p} style={{ 
@@ -115,23 +121,49 @@ export default function NationalDashboard() {
   return (
     <div className="glass-panel" style={{ 
       position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)', 
-      width: '95%', maxWidth: '1200px', padding: '0.8rem 2.5rem', zIndex: 10,
+      width: '98%', maxWidth: '1300px', padding: '0.6rem 1.5rem', zIndex: 10,
       display: 'flex', justifyContent: 'space-between', alignItems: 'center'
     }}>
-      <div className="flex-column" style={{ minWidth: '160px', gap: '4px' }}>
-        <div style={{ fontSize: '0.65rem', color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: '800' }}>Status Report</div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: '800', fontFamily: 'var(--font-heading)', lineHeight: '1' }}>Day {turn} of 14</h2>
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Campaign Phase</span>
+      <div className="flex-column" style={{ minWidth: '140px', gap: '2px' }}>
+        <div style={{ fontSize: '0.6rem', color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: '800' }}>Status Report</div>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: '800', fontFamily: 'var(--font-heading)', lineHeight: '1' }}>Day {turn} of 14</h2>
+        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Campaign Phase</span>
       </div>
 
-      <div className="flex-center" style={{ gap: 'max(3rem, 5vw)', flex: 1, padding: '0 2rem' }}>
+      <div className="flex-center" style={{ gap: 'max(1.5rem, 3vw)', flex: 1, padding: '0 1rem' }}>
         {renderFactionBlock('Faction1', factionColors.Faction1)}
         {renderFactionBlock('Faction2', factionColors.Faction2)}
-        {renderFactionBlock('Faction3', factionColors.Faction3)}
+        {(factionParties.Faction3?.length > 0) && renderFactionBlock('Faction3', factionColors.Faction3)}
         
-        <div style={{ textAlign: 'center', opacity: 0.9 }}>
-          <div style={{ color: factionColors.Undecided, fontWeight: '800', fontSize: '1.8rem' }}>{seatCounts.Undecided}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Undecided</div>
+        <div style={{ textAlign: 'center', opacity: 0.9 }} className="faction-block flex-column flex-center">
+          <div style={{ 
+            color: 'var(--text-primary)', 
+            fontWeight: '800', 
+            fontSize: '2.5rem', 
+            fontFamily: 'var(--font-heading)',
+            textShadow: '0 2px 10px rgba(0,0,0,0.5)' 
+          }}>{seatCounts.Undecided}</div>
+          <div style={{ 
+            fontSize: '0.75rem', 
+            color: 'var(--text-muted)', 
+            textTransform: 'uppercase', 
+            letterSpacing: '1px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            justifyContent: 'center',
+            fontWeight: '700'
+          }}>
+            <div style={{ 
+              width: '10px', 
+              height: '10px', 
+              borderRadius: '50%', 
+              backgroundColor: factionColors.Undecided,
+              boxShadow: `0 0 8px ${factionColors.Undecided}44`,
+              border: '1px solid rgba(255,255,255,0.2)'
+            }} />
+            Undecided
+          </div>
         </div>
       </div>
 

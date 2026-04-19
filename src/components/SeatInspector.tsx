@@ -58,7 +58,7 @@ export default function SeatInspector({ seatId, onClose }: { seatId: string | nu
       <div style={{ marginBottom: '1rem' }}>
         <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Popularity Tracker</div>
         
-        {['Faction1', 'Faction2', 'Faction3', 'Others'].map(coalition => {
+        {['Faction1', 'Faction2', 'Faction3', 'Others'].filter(f => f !== 'Faction3' || factionParties.Faction3?.length > 0).map(coalition => {
           const pop = seat.popularityTracker[coalition as keyof typeof seat.popularityTracker];
           const parties = factionParties[coalition] || [];
           return (

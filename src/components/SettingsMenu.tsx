@@ -1,4 +1,4 @@
-import { Settings, Volume2, VolumeX, X } from 'lucide-react';
+import { Settings, Volume2, VolumeX, X, Palette } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
 
@@ -7,7 +7,12 @@ const SettingsMenu = () => {
     isSettingsOpen, 
     setSettingsOpen, 
     audioSettings, 
-    setAudioSettings 
+    setAudioSettings,
+    factionColors,
+    factionNames,
+    factionParties,
+    setFactionColor,
+    resetFactionColors
   } = useGameStore();
 
   if (!isSettingsOpen) {
@@ -158,17 +163,60 @@ const SettingsMenu = () => {
             </label>
           </div>
 
-          <div style={{ 
-            marginTop: '1rem', 
-            padding: '1rem', 
-            borderRadius: '12px', 
-            background: 'rgba(255,255,255,0.03)', 
-            fontSize: '0.85rem', 
-            color: 'var(--text-muted)',
-            lineHeight: '1.4'
-          }}>
-            <p><strong>Pro-Tip:</strong> Use the Volume slider to satisfy browser interaction policies and enable sound immediately.</p>
+          {/* Faction Colors Section */}
+          <div className="flex-column" style={{ gap: '1rem', paddingTop: '1.2rem', borderTop: '1px solid var(--border-glass)' }}>
+            <div className="flex-between">
+              <label style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Palette size={18} style={{ color: 'var(--accent-teal)' }} /> Campaign Theme
+              </label>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  resetFactionColors();
+                  playClick();
+                }}
+                className="glass-button"
+                style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+              >
+                Reset to Defaults
+              </button>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              {['Faction1', 'Faction2', 'Faction3'].filter(id => id !== 'Faction3' || factionParties.Faction3?.length > 0).map((id) => (
+                <div key={id} className="flex-center" style={{ 
+                  background: 'rgba(255,255,255,0.05)', 
+                  padding: '0.8rem', 
+                  borderRadius: '8px', 
+                  gap: '12px',
+                  justifyContent: 'flex-start'
+                }}>
+                  <input 
+                    type="color" 
+                    value={factionColors[id]} 
+                    onChange={(e) => setFactionColor(id, e.target.value)}
+                    style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      border: 'none', 
+                      background: 'none', 
+                      cursor: 'pointer',
+                      padding: 0
+                    }} 
+                  />
+                  <div className="flex-column">
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>
+                      {factionNames[id]}
+                    </span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                      {id === 'Faction1' ? 'Player' : 'Opposition'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+
         </div>
       </div>
     </div>

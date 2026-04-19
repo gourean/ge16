@@ -111,6 +111,10 @@ export interface GameState {
   // Interaction (for Audio)
   hasInteractionStarted: boolean;
   setInteractionStarted: (started: boolean) => void;
+
+  setFactionColor: (factionId: string, color: string) => void;
+  startingFactionColors: Record<string, string>;
+  resetFactionColors: () => void;
 }
 
 const initialPlayerState = {
@@ -170,6 +174,13 @@ export const useGameStore = create<GameState>((set, get) => ({
   triggeredEventIds: [],
   exitConfirmationOpen: false,
   actionsRemaining: 3,
+  startingFactionColors: {
+    Faction1: '#ef4444',
+    Faction2: '#0ea5e9',
+    Faction3: '#2563eb',
+    Others: '#8b5cf6',
+    Undecided: '#6b7280'
+  },
   
   isSettingsOpen: false,
   audioSettings: loadSavedAudioSettings(),
@@ -222,6 +233,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       Faction1: [],
       Faction2: [],
       Faction3: [],
+    },
+    startingFactionColors: {
+      Faction1: '#ef4444',
+      Faction2: '#0ea5e9',
+      Faction3: '#2563eb',
+      Others: '#8b5cf6',
+      Undecided: '#6b7280'
     }
   }),
   
@@ -262,6 +280,10 @@ export const useGameStore = create<GameState>((set, get) => ({
         Faction3: f3Parties,
       },
       factionColors: {
+        ...state.factionColors,
+        ...colors
+      },
+      startingFactionColors: {
         ...state.factionColors,
         ...colors
       }
@@ -393,5 +415,16 @@ export const useGameStore = create<GameState>((set, get) => ({
           activeEvent: null, 
           triggeredEventIds: [...state.triggeredEventIds, currentEvent.id] 
       }); // clear the event and mark as triggered
-  }
+  },
+
+  setFactionColor: (factionId, color) => set((state) => ({
+    factionColors: {
+      ...state.factionColors,
+      [factionId]: color
+    }
+  })),
+
+  resetFactionColors: () => set((state) => ({
+    factionColors: { ...state.startingFactionColors }
+  }))
 }));

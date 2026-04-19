@@ -76,3 +76,56 @@ export const normalizePopularity = <T extends Record<string, number>>(tracker: T
 
   return newTracker as T;
 };
+
+/**
+ * Adjusts a color for UI visibility. If the color is too dark, it returns a lightened version.
+ */
+export const getAdjustedColor = (hex: string, minLightness = 45): string => {
+  // Simple hex to RGB
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
+  // Convert to HSL
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+  const max = Math.max(rNorm, gNorm, bNorm);
+  const min = Math.min(rNorm, gNorm, bNorm);
+  let h = 0, s = 0, l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break;
+      case gNorm: h = (bNorm - rNorm) / d + 2; break;
+      case bNorm: h = (rNorm - gNorm) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  const lightness = l * 100;
+  if (lightness >= minLightness) return hex;
+
+  // Bump lightness for display
+  const newL = minLightness;
+  
+  // Convert HSL back to Hex (simplified)
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+
+  const q = newL < 50 ? (newL/100) * (1 + s) : (newL/100) + s - (newL/100) * s;
+  const p = 2 * (newL/100) - q;
+  const finalR = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+  const finalG = Math.round(hue2rgb(p, q, h) * 255);
+  const finalB = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+
+  return `#${((1 << 24) + (finalR << 16) + (finalG << 8) + finalB).toString(16).slice(1)}`;
+};

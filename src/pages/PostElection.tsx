@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
 
 export default function PostElection() {
-  const { seats, playerState, factionNames, factionColors, setGamePhase } = useGameStore();
+  const { seats, playerState, factionNames, factionColors, factionParties, setGamePhase } = useGameStore();
   
   // Shuffled seats for random intake
   const shuffledSeats = useMemo(() => {
@@ -306,7 +306,7 @@ export default function PostElection() {
           <h2 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem', letterSpacing: '1px', fontSize: '1.2rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Election Tally</h2>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', flex: 1, overflowY: 'auto', paddingRight: '0.5rem' }}>
-            {Object.entries(factionNames).filter(([id]) => id !== 'Undecided').sort((a,b) => stats.counts[b[0] as keyof typeof stats.counts] - stats.counts[a[0] as keyof typeof stats.counts]).map(([id, name]) => {
+            {Object.entries(factionNames).filter(([id]) => id !== 'Undecided' && (id !== 'Faction3' || factionParties.Faction3?.length > 0)).sort((a,b) => stats.counts[b[0] as keyof typeof stats.counts] - stats.counts[a[0] as keyof typeof stats.counts]).map(([id, name]) => {
               const count = stats.counts[id as keyof typeof stats.counts] || 0;
               const barWidth = Math.min(100, (count / 222) * 100);
               const color = factionColors[id];

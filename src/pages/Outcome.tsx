@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
 
 export default function Outcome() {
-  const { seats, playerState, factionNames, factionColors, resetGame } = useGameStore();
+  const { seats, playerState, factionNames, factionColors, factionParties, resetGame } = useGameStore();
 
   const results = useMemo(() => {
     const counts = { Faction1: 0, Faction2: 0, Faction3: 0, Others: 0 };
@@ -26,7 +26,7 @@ export default function Outcome() {
     { id: 'Faction2', count: results.Faction2 },
     { id: 'Faction3', count: results.Faction3 },
     { id: 'Others', count: results.Others },
-  ].sort((a,b) => b.count - a.count);
+  ].filter(c => c.id !== 'Faction3' || factionParties.Faction3?.length > 0).sort((a,b) => b.count - a.count);
 
   const myCoalition = playerState.currentCoalition;
   const myCount = results[myCoalition as keyof typeof results] || 0;
@@ -158,14 +158,25 @@ export default function Outcome() {
               <div className="glass-panel" style={{ flex: 1, padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)' }}>
                  <h3 style={{ marginBottom: '1.2rem', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '2px', textTransform: 'uppercase', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.5rem' }}>Final Bench Count</h3>
                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                    {coalitions.map(c => (
-                      <div key={c.id} className="flex-between" style={{ fontSize: '1rem' }}>
-                         <span style={{ color: factionColors[c.id], fontWeight: c.id === myCoalition ? 'bold' : 'normal', opacity: c.id === myCoalition ? 1 : 0.8 }}>
-                           {factionNames[c.id]}
-                         </span>
-                         <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-heading)' }}>{c.count}</span>
-                      </div>
-                    ))}
+                     {coalitions.map(c => {
+                       return (
+                         <div key={c.id} className="flex-between" style={{ fontSize: '1.1rem', padding: '4px 0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                               <div style={{ 
+                                 width: '12px', 
+                                 height: '12px', 
+                                 borderRadius: '50%', 
+                                 backgroundColor: factionColors[c.id],
+                                 boxShadow: `0 0 10px ${factionColors[c.id]}`
+                               }} />
+                               <span style={{ color: 'var(--text-primary)', fontWeight: c.id === myCoalition ? 'bold' : 'normal' }}>
+                                 {factionNames[c.id]}
+                               </span>
+                            </div>
+                            <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-heading)', fontSize: '1.2rem' }}>{c.count}</span>
+                         </div>
+                       );
+                     })}
                  </div>
               </div>
            </div>
