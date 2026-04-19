@@ -302,7 +302,7 @@ export const useGameStore = create<GameState>((set, get) => ({
                 const newTracker = normalizePopularity({
                     ...s.popularityTracker,
                     [myCoal]: Math.max(0, s.popularityTracker[myCoal] - 2.0)
-                });
+                } as typeof s.popularityTracker);
                 return { ...s, popularityTracker: newTracker };
             }
             return s;
@@ -353,8 +353,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Apply new popularities via effect function and normalize
     const newSeats = effect([...state.seats]).map(s => ({
       ...s,
-      popularityTracker: normalizePopularity(s.popularityTracker)
-    }));
+      popularityTracker: normalizePopularity(s.popularityTracker as any) as any
+    })) as Seat[];
     
     set({
       seats: newSeats,
@@ -381,8 +381,8 @@ export const useGameStore = create<GameState>((set, get) => ({
               if (actualUpdate.seats) {
                   actualUpdate.seats = actualUpdate.seats.map(s => ({
                       ...s,
-                      popularityTracker: normalizePopularity(s.popularityTracker)
-                  }));
+                      popularityTracker: normalizePopularity(s.popularityTracker as any) as any
+                  })) as Seat[];
               }
               set(actualUpdate);
           };

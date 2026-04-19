@@ -49,9 +49,9 @@ export const seatMatchesDemographic = (seat: Seat, demo: string): boolean => {
 /**
  * Normalizes popularity values to ensure they sum to exactly 100% and stay within [0, 100].
  */
-export const normalizePopularity = (tracker: Record<string, number>): Record<string, number> => {
-  const categories = Object.keys(tracker);
-  const newTracker: Record<string, number> = {};
+export const normalizePopularity = <T extends Record<string, number>>(tracker: T): T => {
+  const categories = Object.keys(tracker) as (keyof T)[];
+  const newTracker: any = {};
   
   // 1. Clamp all values to [0, 100]
   let sum = 0;
@@ -70,9 +70,9 @@ export const normalizePopularity = (tracker: Record<string, number>): Record<str
   } else {
     // Edge case: everything is zero (shouldn't happen)
     // Default to "Others" or Undecided if available
-    const fallback = categories.includes('Others') ? 'Others' : categories[0];
-    newTracker[fallback] = 100;
+    const fallback = categories.includes('Others' as keyof T) ? 'Others' : categories[0];
+    newTracker[fallback as keyof T] = 100;
   }
 
-  return newTracker;
+  return newTracker as T;
 };

@@ -100,7 +100,7 @@ export function applyManifestoToSeats(
       },
       popularityTracker: {
         ...newTracker
-      }
+      } as typeof seat.popularityTracker
     };
   });
 }
