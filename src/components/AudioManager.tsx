@@ -16,13 +16,13 @@ const AudioManager = () => {
     switch (gamePhase) {
       case 'PRE_CAMPAIGN':
       case 'MANIFESTO':
-        track = '/audio/intro.mp3';
+        track = './audio/intro.mp3';
         break;
       case 'CAMPAIGN':
-        track = '/audio/campaign.mp3';
+        track = './audio/campaign.mp3';
         break;
       case 'POST_ELECTION':
-        track = '/audio/result.mp3';
+        track = './audio/result.mp3';
         break;
     }
 

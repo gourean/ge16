@@ -17,7 +17,7 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
 
   // Load SVG once — inject into a .map-pan-layer wrapper inside mapContainerRef
   useEffect(() => {
-    fetch('/assets/map/map_2022_final.svg')
+    fetch('./assets/map/map_2022_final.svg')
       .then(res => res.text())
       .then(svgText => {
         if (!mapContainerRef.current) return;

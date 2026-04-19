@@ -34,7 +34,7 @@ function App() {
 
   useEffect(() => {
     // Fetch initial data
-    fetch('/assets/data/initial_state_v2.json')
+    fetch('./assets/data/initial_state_v2.json')
       .then(res => res.json())
       .then((data: Seat[]) => {
         loadInitialSeats(data);

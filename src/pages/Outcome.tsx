@@ -78,32 +78,32 @@ export default function Outcome() {
   let status = "";
   let description = "";
   let title = "";
-  let imagePath = "/assets/images/outcome/pm_victory.png"; 
+  let imagePath = "./assets/images/outcome/pm_victory.png"; 
   
   if (isWinner) {
     status = "Election of the 11th Prime Minister";
     title = "A DEFINING MANDATE";
     description = `With a decisive count of ${myCount} seats, ${myAllianceName} has secured an absolute majority in Parliament. The Yang di-Pertuan Agong has formally invited the coalition leadership to Seri Perdana. A new era of governance is set to begin.`;
-    imagePath = "/assets/images/outcome/pm_victory.png";
+    imagePath = "./assets/images/outcome/pm_victory.png";
   } else if (isHung && isPlayerInUnion && unionInfo) {
     const partnerId = unionInfo.a === myCoalition ? unionInfo.b : unionInfo.a;
     const partnerName = factionNames[partnerId as keyof typeof factionNames];
     status = "Union Government Formed";
     title = "THE POWER SHARING ACCORD";
     description = `In a historic resolution to the Hung Parliament, ${myAllianceName} has entered into a strategic union with ${partnerName}. Combining for ${unionInfo.total} seats, the two blocs have secured a stable majority to govern the nation under a shared mandate of reconciliation and reform.`;
-    imagePath = "/assets/images/outcome/union.png";
+    imagePath = "./assets/images/outcome/union.png";
   } else if (isTop2) {
     status = "Official Opposition Formed";
     title = isHung ? "STALEMATE RESOLVED" : "THE SHADOW CABINET";
     description = isHung 
       ? `${myAllianceName} has secured ${myCount} seats in a fragmented Parliament. Despite the Hung Parliament outcome, the coalition was unable to secure a partnership in the new Union Government and will now lead the Opposition to ensure rigorous oversight.`
       : `${myAllianceName} has secured ${myCount} seats, establishing a formidable presence as the primary opposition bloc. While falling short of a majority, the coalition remains the largest alternative force in the House.`;
-    imagePath = "/assets/images/outcome/opposition_leader.png";
+    imagePath = "./assets/images/outcome/opposition_leader.png";
   } else {
     status = "Leadership Resignation Announced";
     title = "SHOCK DEFEAT";
     description = `Following a performance that yielded only ${myCount} seats, the leadership of ${myAllianceName} has announced a strategic withdrawal from the frontlines. A period of internal restructuring is expected as the coalition reels from these historic losses.`;
-    imagePath = "/assets/images/outcome/resignation.png";
+    imagePath = "./assets/images/outcome/resignation.png";
   }
 
   return (
