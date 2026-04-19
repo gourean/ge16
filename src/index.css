@@ -1,0 +1,436 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap');
+
+:root {
+  /* Color Palette - Premium Dark Mode */
+  --bg-dark: #0f111a;
+  --bg-card: rgba(25, 28, 41, 0.7);
+  --bg-card-hover: rgba(35, 38, 55, 0.8);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  
+  --text-primary: #f0f2f8;
+  --text-muted: #a0a6b8;
+  
+  --accent-blue: #3b82f6;
+  --accent-red: #ef4444;
+  --accent-teal: #14b8a6;
+  --accent-purple: #8b5cf6;
+  --accent-gold: #f59e0b;
+  
+  /* Coalitions (Base defaults) */
+  --coalition-others: #8b5cf6;
+  --coalition-undecided: #6b7280;
+
+  /* Gradients */
+  --grad-premium: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+  --grad-highlight: linear-gradient(90deg, #3b82f6, #8b5cf6);
+
+  /* Shadows */
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 15px rgba(59, 130, 246, 0.4);
+
+  /* Typography */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-dark);
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  box-shadow: var(--shadow-glass);
+  transition: all 0.3s ease;
+}
+
+.glass-panel:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.glass-button.active {
+  background: var(--grad-highlight);
+  border-color: transparent;
+  box-shadow: var(--shadow-glow);
+}
+
+.glass-button.success {
+  border-color: rgba(20, 184, 166, 0.3);
+  color: var(--accent-teal);
+}
+
+.glass-button.success:hover {
+  background: rgba(20, 184, 166, 0.1);
+  box-shadow: 0 0 15px rgba(20, 184, 166, 0.2);
+}
+
+.glass-button.danger {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--accent-red);
+}
+
+.glass-button.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+}
+
+/* D3 Map Styles — Split Pan/Zoom GPU Architecture
+ *
+ * Pan  → CSS transform on .map-pan-layer (GPU composited, zero re-raster)
+ * Zoom → SVG transform attr on .zoom-group (vector re-drawn at correct scale)
+ *
+ * IMPORTANT: Never apply will-change/translateZ to the SVG element itself.
+ * Doing so rasterises vector paths into a fixed-resolution bitmap, causing
+ * pixelation when the user zooms in.
+ */
+
+/* Container: isolate paint from the rest of the page — no clipping here,
+ * the outer wrapper <div style="overflow:hidden"> handles that. */
+.map-container {
+  contain: layout style;
+  background-color: var(--bg-dark);
+}
+
+/* SVG fills the pan layer — display:block removes inline baseline gap */
+.map-container svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * Pan layer — this is the ONLY element that gets GPU-promoted.
+ * Because it only ever receives CSS translate (no scale), the browser
+ * can composite it without re-rasterising the SVG content inside.
+ */
+.map-pan-layer {
+  width: 100%;
+  height: 100%;
+  /* Removed will-change to prevent browser from rasterizing SVG into a bitmap, 
+     ensuring perfect vector sharpness at all zoom levels. */
+  transform: translate(0px, 0px);
+}
+
+.map-path {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 0.5px;
+  /* Only transition fill — filter transitions force per-element CPU repaints */
+  transition: fill 0.3s ease, stroke-width 0.2s ease;
+  /* geometricPrecision: full anti-aliasing at every zoom level (default) */
+  shape-rendering: geometricPrecision;
+}
+
+.map-path:hover {
+  filter: brightness(1.2) drop-shadow(0 0 4px rgba(255,255,255,0.5));
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 1.5px;
+  cursor: crosshair;
+}
+
+.labels-layer {
+  pointer-events: none;
+  /* Prevent labels from being affected by parents' filters if any */
+  filter: none !important;
+}
+
+/* Layout Utilities */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.page-container {
+  min-height: 100vh;
+  width: 100vw;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* News & Terminal Styles */
+.news-item {
+  padding: 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  gap: 1rem;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.news-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(5px);
+}
+
+.news-item.alert {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid var(--accent-red);
+}
+
+.news-item.landslide {
+  background: rgba(245, 158, 11, 0.1);
+  border-left: 4px solid var(--accent-gold);
+}
+
+.news-tag {
+  font-weight: 800;
+  font-size: 0.7rem;
+  min-width: 80px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.digital-scan {
+  position: relative;
+  overflow: hidden;
+}
+
+.digital-scan::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.1) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.03),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 4px, 3px 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.digital-scan-blue {
+  filter: sepia(100%) hue-rotate(190deg) saturate(150%) brightness(90%);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0px rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+  100% { box-shadow: 0 0 0px rgba(59, 130, 246, 0.4); }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2); 
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1); 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2); 
+}
+
+.action-btn-hover:hover {
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-color: var(--accent-blue) !important;
+}
+
+.action-btn-hover:hover svg {
+  filter: drop-shadow(0 0 5px var(--accent-blue));
+  transform: scale(1.1);
+}
+
+.faction-block {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.5rem;
+  border-radius: 12px;
+}
+
+.faction-block:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+.hide-on-small {
+  display: inline;
+}
+
+@media (max-width: 1100px) {
+  .hide-on-small {
+    display: none;
+  }
+}
+
+/* Settings UI Components */
+
+/* Premium Slider */
+.premium-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.premium-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent-blue);
+  cursor: pointer;
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+  border: 2px solid white;
+}
+
+.premium-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--accent-blue);
+  cursor: pointer;
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+  border: 2px solid white;
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider-toggle {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: .4s ease;
+  border: 1px solid var(--border-glass);
+}
+
+.slider-toggle:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+input:checked + .slider-toggle {
+  background-color: var(--accent-blue);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+input:checked + .slider-toggle:before {
+  transform: translateX(24px);
+}
+
+.slider-toggle.round {
+  border-radius: 34px;
+}
+
+.slider-toggle.round:before {
+  border-radius: 50%;
+}
