@@ -250,16 +250,11 @@ export function distributeOpponents(
     return { faction2, faction3 };
   }
 
-  // Distribute 'others' by ideology into the established factions
-  for (const party of othersBucket) {
-    if (['Conservative', 'Islamist'].includes(party.ideology)) {
-      faction2.push(party);
-    } else {
-      faction3.push(party);
-    }
-  }
-
+  // We no longer distribute 'othersBucket' into the major factions (like PEJUANG/GTA).
+  // They will remain independent and contribute to the "Others" category in the dashboard.
+  
   return { faction2, faction3 };
+
 }
 
 /**
