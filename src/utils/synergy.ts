@@ -215,11 +215,6 @@ export function distributeOpponents(
   const phBucket = unselectedParties.filter(p => historicalCoalitions[0].parties.includes(p.id));
   const pnBucket = unselectedParties.filter(p => historicalCoalitions[1].parties.includes(p.id));
   const bnBucket = unselectedParties.filter(p => historicalCoalitions[2].parties.includes(p.id));
-  const othersBucket = unselectedParties.filter(p => 
-    !historicalCoalitions[0].parties.includes(p.id) &&
-    !historicalCoalitions[1].parties.includes(p.id) &&
-    !historicalCoalitions[2].parties.includes(p.id)
-  );
 
   const faction2: Party[] = [];
   const faction3: Party[] = [];
