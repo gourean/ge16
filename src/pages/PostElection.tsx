@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
-import { Newspaper, ChevronDown, ChevronUp, FastForward, Play, Pause, Zap } from 'lucide-react';
+import { Newspaper, FastForward, Play, Pause, Zap } from 'lucide-react';
 
 export default function PostElection() {
   const { seats, playerState, factionNames, factionColors, factionParties, setGamePhase } = useGameStore();
