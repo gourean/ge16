@@ -6,6 +6,7 @@ import Manifesto from './pages/Manifesto';
 import Campaign from './pages/Campaign';
 import PostElection from './pages/PostElection';
 import Outcome from './pages/Outcome';
+import Credits from './pages/Credits';
 import ConfirmationModal from './components/ConfirmationModal';
 import AudioManager from './components/AudioManager';
 import SettingsMenu from './components/SettingsMenu';
@@ -19,6 +20,9 @@ const PhaseRouter = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Prevent redirect if we are on the credits page
+    if (window.location.hash === '#/credits') return;
+
     if (gamePhase === 'PRE_CAMPAIGN') navigate('/');
     else if (gamePhase === 'MANIFESTO') navigate('/manifesto');
     else if (gamePhase === 'CAMPAIGN') navigate('/campaign');
@@ -51,6 +55,7 @@ function App() {
         <Route path="/campaign" element={<Campaign />} />
         <Route path="/post-election" element={<PostElection />} />
         <Route path="/outcome" element={<Outcome />} />
+        <Route path="/credits" element={<Credits />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ConfirmationModal />

@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
 
 export default function Outcome() {
   const { seats, playerState, factionNames, factionColors, factionParties, resetGame } = useGameStore();
+  const navigate = useNavigate();
 
   const results = useMemo(() => {
     const counts = { Faction1: 0, Faction2: 0, Faction3: 0, Others: 0 };
@@ -181,10 +183,10 @@ export default function Outcome() {
               </div>
            </div>
 
-           <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+           <div style={{ marginTop: '1rem', display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
               <button 
                 className="glass-button active pulse-glow" 
-                style={{ padding: '1rem 3.5rem', fontSize: '1rem', borderRadius: '50px', letterSpacing: '2px', fontWeight: 'bold' }}
+                style={{ padding: '1rem 2rem', fontSize: '1rem', borderRadius: '50px', letterSpacing: '2px', fontWeight: 'bold' }}
                 onClick={() => {
                   playClick();
                   resetGame();
@@ -192,6 +194,17 @@ export default function Outcome() {
                 }}
               >
                 RETURN TO TERMINAL
+              </button>
+
+              <button 
+                className="glass-button" 
+                style={{ padding: '1rem 2rem', fontSize: '1rem', borderRadius: '50px', letterSpacing: '2px', fontWeight: 'bold' }}
+                onClick={() => {
+                  playClick();
+                  navigate('/credits');
+                }}
+              >
+                CREDITS
               </button>
            </div>
 
