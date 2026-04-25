@@ -27,8 +27,20 @@ export function classifySeats(seats: Seat[]): Seat[] {
 }
 
 /**
- * Calculates demographic "weights" for a seat to help with manifesto effects.
- * These are heuristics used when explicit demographic data (like "Reformist %") is missing.
+ * Calculates heuristic demographic "weights" for a seat.
+ * 
+ * These multipliers are used to estimate how different segments of the 
+ * population in a seat respond to manifesto policies and campaign events.
+ * 
+ * @param seat The seat to calculate weights for
+ * @returns An object containing weights for various demographic and ideological groups:
+ * - urban/rural/borneo: Binary classification based on seat data.
+ * - youth: Estimated engagement based on urbanization and ethnicity turnout trends.
+ * - b40/m40: Rough estimates of income groups (B40 is higher in rural areas).
+ * - nationalist/conservative/reformist: Ideological leanings derived from ethnicity 
+ *   and geographic location (Urban/Rural splits).
+ * - minority: Combined Chinese, Indian, and Borneo indigenous populations.
+ * - heartland: Represents the rural Malay core in Peninsular Malaysia.
  */
 function getSeatDemographicWeights(seat: Seat) {
   const mal = seat.ethnicity?.malay || 0;
@@ -42,13 +54,21 @@ function getSeatDemographicWeights(seat: Seat) {
     urban: seat.isUrban ? 1 : 0,
     rural: seat.isRural ? 1 : 0,
     borneo: seat.isBorneo ? 1 : 0,
-    youth: (urbanFactor * 0.4) + (chi * 0.005) + (mal * 0.002), // Heuristic: Urban/Chinese areas have higher youth engagement in GE15 data
-    b40: seat.isRural ? 0.6 : 0.3, // Simple approximation
+    // Youth engagement heuristic: Higher in urban and non-Malay majority areas
+    youth: (urbanFactor * 0.4) + (chi * 0.005) + (mal * 0.002), 
+    // B40: Estimated 60% in rural, 30% in urban
+    b40: seat.isRural ? 0.6 : 0.3, 
+    // M40: Estimated 50% in urban, 20% in rural
     m40: seat.isUrban ? 0.5 : 0.2,
+    // Nationalist: Scaled by Malay population and rurality
     nationalist: (mal * 0.01) * (seat.isRural ? 1.2 : 0.8),
+    // Reformist: Scaled by urban urbanization and minority populations
     reformist: (urbanFactor * 0.6) + (chi * 0.005) + (ind * 0.003),
+    // Conservative: Highly concentrated in rural Malay areas
     conservative: (mal * 0.008) * (seat.isRural ? 1.5 : 0.5),
+    // Minority: Total non-Malay/non-Muslim (including Borneo indigenous)
     minority: chi + ind + (seat.isBorneo ? bumiB : 0),
+    // Heartland: Exclusively Rural Malay in Peninsular Malaysia
     heartland: seat.isRural && !seat.isBorneo ? mal : 0
   };
 }

@@ -39,7 +39,7 @@ export const manifestoItems: ManifestoItem[] = [
     category: "Economy",
     responses: {
       agree: {
-        demographics: { b40: -10 },
+        demographics: { b40: -10, urban: 10 },
         resources: { momentum: 0 }, // Corporate Funds skip
         tags: ["Capitalist", "Unpopular"]
       },

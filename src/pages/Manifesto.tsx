@@ -54,7 +54,27 @@ export default function Manifesto() {
           if (results[key] !== undefined) {
             results[key] += (val as number);
           }
+          
+          // Simplified mapping for a cleaner chart:
+          // B40/M40 are mapped to Progressive/Reformist sentiments
+          // B40 also heavily impacts Rural sentiment in our simulation
+          // Urbanization is mapped to Progressive and Reformist sentiments
+          if (key === 'b40') {
+            results.progressive += (val as number);
+            results.rural += (val as number) * 0.5;
+          }
+          if (key === 'm40') results.reformist += (val as number) * 0.5;
+          if (key === 'urban') {
+            results.progressive += (val as number) * 0.5;
+            results.reformist += (val as number) * 0.5;
+          }
+          
+          // Nationalist/Heartland are mapped to Conservative/Rural
           if (key === 'nationalist') results.conservative += (val as number) * 0.5;
+          if (key === 'heartland') {
+            results.conservative += (val as number) * 0.5;
+            results.rural += (val as number) * 0.5;
+          }
         });
       }
     });

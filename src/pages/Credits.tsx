@@ -12,11 +12,13 @@ export default function Credits() {
       <div className="animate-fade-in glass-panel" style={{
         maxWidth: '700px',
         width: '100%',
-        padding: '3rem',
+        padding: '2.5rem',
         textAlign: 'center',
         display: 'flex',
         flexDirection: 'column',
-        gap: '2.5rem'
+        gap: '2rem',
+        maxHeight: '90vh',
+        overflowY: 'auto'
       }}>
         <div>
           <h1 style={{
@@ -71,6 +73,23 @@ export default function Credits() {
               <li>Dvořák — Symphony No. 9, 4th Mvt</li>
               <li>Beethoven — Ode to Joy</li>
             </ul>
+          </section>
+
+          <section className="credit-section methodology">
+            <h3 className="section-header">Simulation Methodology</h3>
+            <div className="methodology-grid">
+              <div className="methodology-item">
+                <span className="method-label">Ideological Sentiments:</span>
+                <span className="method-desc">
+                  Youth, Conservative, Progressive, Reformist, and Nationalist weights are estimated using ethnicity × urbanization turnout data.
+                </span>
+              </div>
+              <div className="methodology-item">
+                <p style={{ fontSize: '0.8rem', opacity: 0.6, fontStyle: 'italic', marginTop: '0.5rem' }}>
+                  Check the <strong>JSDoc</strong> documentation in the source code under <code>synergy.ts</code>.
+                </p>
+              </div>
+            </div>
           </section>
 
         </div>
@@ -149,6 +168,45 @@ export default function Credits() {
         .credit-section:nth-child(2) { animation-delay: 0.2s; }
         .credit-section:nth-child(3) { animation-delay: 0.3s; }
         .credit-section:nth-child(4) { animation-delay: 0.4s; }
+        .credit-section:nth-child(5) { animation-delay: 0.5s; }
+
+        .methodology {
+          background: rgba(255,255,255,0.03);
+          padding: 1.25rem;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .methodology-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          margin-top: 0.5rem;
+        }
+
+        .methodology-item {
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+        }
+
+        .method-label {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: var(--accent-teal);
+        }
+
+        .method-desc {
+          font-size: 0.9rem;
+          opacity: 0.8;
+          line-height: 1.4;
+        }
+
+        /* Scrollbar styling for the panel */
+        .glass-panel::-webkit-scrollbar { width: 6px; }
+        .glass-panel::-webkit-scrollbar-track { background: transparent; }
+        .glass-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .glass-panel::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
         @keyframes slideIn {
           from { opacity: 0; transform: translateX(-10px); }
