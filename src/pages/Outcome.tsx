@@ -40,11 +40,9 @@ export default function Outcome() {
   const unionInfo = useMemo(() => {
     if (!isHung) return null;
 
-    // Filter available factions for coalition (Faction 1, 2, 3)
     const blocks = coalitions.filter(c => ['Faction1', 'Faction2', 'Faction3'].includes(c.id));
     const pairs: { a: string, b: string, total: number }[] = [];
 
-    // Find all pairs that make a majority (112+)
     for (let i = 0; i < blocks.length; i++) {
       for (let j = i + 1; j < blocks.length; j++) {
         const total = blocks[i].count + blocks[j].count;
@@ -55,7 +53,6 @@ export default function Outcome() {
     }
 
     if (pairs.length === 0) {
-      // Fallback: search for largest possible pair if none reach 112
       const allPairs = [];
       for (let i = 0; i < blocks.length; i++) {
         for (let j = i + 1; j < blocks.length; j++) {
@@ -66,7 +63,6 @@ export default function Outcome() {
       return allPairs[0] || null;
     }
 
-    // Randomly select one valid pair
     return pairs[Math.floor(Math.random() * pairs.length)];
   }, [isHung, coalitions]);
 
@@ -109,60 +105,55 @@ export default function Outcome() {
   }
 
   return (
-    <div className="page-container" style={{ background: 'radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.1), transparent 40%)' }}>
+    <div className="page-container outcome-page" style={{ background: 'radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.1), transparent 40%)' }}>
       
-      <div className="animate-fade-in" style={{ maxWidth: '900px', width: '100%', position: 'relative' }}>
+      <div className="animate-fade-in outcome-content-wrapper" style={{ maxWidth: '900px', width: '100%', position: 'relative' }}>
         
-        {/* Newspaper Style Header — Digital Version */}
-        <div style={{ textAlign: 'center', marginBottom: '3rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1.5rem' }}>
-            <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: '4rem', marginBottom: '0.5rem', letterSpacing: '-1.5px', textTransform: 'uppercase', color: 'white' }}>MALAYSIA GAZETTE</h1>
-            <div className="flex-between" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '4px', fontWeight: 'bold' }}>
-               <span>Digital Archives</span>
+        <div className="newspaper-header" style={{ textAlign: 'center', marginBottom: '3rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1.5rem' }}>
+            <h1 className="newspaper-title" style={{ fontFamily: "'Playfair Display', serif", fontSize: '4rem', marginBottom: '0.5rem', letterSpacing: '-1.5px', textTransform: 'uppercase', color: 'white' }}>MALAYSIA GAZETTE</h1>
+            <div className="flex-between newspaper-meta" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '4px', fontWeight: 'bold' }}>
+               <span className="desktop-only">Digital Archives</span>
                <span>{new Date().toLocaleDateString('en-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-               <span>Final Report</span>
+               <span className="desktop-only">Final Report</span>
             </div>
         </div>
 
-        {/* Main Content: Digital Glass Panel */}
-        <div className="glass-panel" style={{ padding: '3rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', background: 'rgba(255,255,255,0.01)' }}>
+        <div className="glass-panel outcome-main-panel" style={{ padding: '3rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', background: 'rgba(255,255,255,0.01)' }}>
            
-           {/* Headline */}
            <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontSize: '3.5rem', lineHeight: '1', fontWeight: '900', color: isPoorPerformance ? 'var(--accent-red)' : 'var(--accent-gold)', marginBottom: '0.8rem', letterSpacing: '-1px' }}>
+              <h2 className="outcome-headline" style={{ fontSize: '3.5rem', lineHeight: '1', fontWeight: '900', color: isPoorPerformance ? 'var(--accent-red)' : 'var(--accent-gold)', marginBottom: '0.8rem', letterSpacing: '-1px' }}>
                 {title}
               </h2>
-              <div style={{ fontSize: '1rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '5px', fontWeight: 'bold' }}>
+              <div className="outcome-status" style={{ fontSize: '1rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '5px', fontWeight: 'bold' }}>
                  {status}
               </div>
            </div>
 
-           {/* Landscape Image with Digital Scan Effect */}
-           <div className="digital-scan" style={{ borderRadius: '12px', border: '1px solid var(--border-glass)', boxShadow: '0 0 40px rgba(0,0,0,0.5)' }}>
+           <div className="digital-scan outcome-image-container" style={{ borderRadius: '12px', border: '1px solid var(--border-glass)', boxShadow: '0 0 40px rgba(0,0,0,0.5)' }}>
               <img 
                 src={imagePath} 
-                className="digital-scan-blue"
+                className="digital-scan-blue outcome-image"
                 alt="Front Page Story" 
                 style={{ width: '100%', maxHeight: '450px', objectFit: 'cover', display: 'block' }} 
               />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1.5rem', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', textAlign: 'center', fontStyle: 'italic', zIndex: 3 }}>
-                 DATA RECONSTRUCTION: CERTIFIED ELECTION OUTCOME — SATURDAY 22:45
+              <div className="image-caption" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1.5rem', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', textAlign: 'center', fontStyle: 'italic', zIndex: 3 }}>
+                 DATA RECONSTRUCTION: CERTIFIED ELECTION OUTCOME
               </div>
            </div>
 
-           {/* Report Text */}
-           <div className="flex-row" style={{ gap: '2rem', alignItems: 'flex-start' }}>
-              <div style={{ flex: 1.5 }}>
-                <p style={{ fontSize: '1.25rem', lineHeight: '1.6', color: 'var(--text-primary)', marginBottom: '2rem', textAlign: 'justify', fontStyle: 'italic', opacity: 0.9 }}>
+           <div className="flex-row report-body" style={{ gap: '2rem', alignItems: 'flex-start' }}>
+              <div className="report-text-container" style={{ flex: 1.5 }}>
+                <p className="report-description" style={{ fontSize: '1.25rem', lineHeight: '1.6', color: 'var(--text-primary)', marginBottom: '2rem', textAlign: 'justify', fontStyle: 'italic', opacity: 0.9 }}>
                   {description}
                 </p>
               </div>
 
-              <div className="glass-panel" style={{ flex: 1, padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)' }}>
+              <div className="glass-panel results-summary-panel" style={{ flex: 1, padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)' }}>
                  <h3 style={{ marginBottom: '1.2rem', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '2px', textTransform: 'uppercase', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.5rem' }}>Final Bench Count</h3>
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                 <div className="results-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                      {coalitions.map(c => {
                        return (
-                         <div key={c.id} className="flex-between" style={{ fontSize: '1.1rem', padding: '4px 0' }}>
+                         <div key={c.id} className="flex-between result-item" style={{ fontSize: '1.1rem', padding: '4px 0' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                <div style={{ 
                                  width: '12px', 
@@ -183,9 +174,9 @@ export default function Outcome() {
               </div>
            </div>
 
-           <div style={{ marginTop: '1rem', display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
+           <div className="outcome-actions" style={{ marginTop: '1rem', display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
               <button 
-                className="glass-button active pulse-glow" 
+                className="glass-button active pulse-glow return-btn" 
                 style={{ padding: '1rem 2rem', fontSize: '1rem', borderRadius: '50px', letterSpacing: '2px', fontWeight: 'bold' }}
                 onClick={() => {
                   playClick();
@@ -193,11 +184,11 @@ export default function Outcome() {
                   window.location.reload();
                 }}
               >
-                RETURN TO TERMINAL
+                RESTART
               </button>
 
               <button 
-                className="glass-button" 
+                className="glass-button credits-btn" 
                 style={{ padding: '1rem 2rem', fontSize: '1rem', borderRadius: '50px', letterSpacing: '2px', fontWeight: 'bold' }}
                 onClick={() => {
                   playClick();
@@ -214,8 +205,67 @@ export default function Outcome() {
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');
+        
+        @media (max-width: 768px) {
+          .outcome-page {
+            padding: 1rem !important;
+          }
+          .newspaper-title {
+            font-size: 2rem !important;
+            letter-spacing: -1px !important;
+          }
+          .newspaper-header {
+            margin-bottom: 1.5rem !important;
+          }
+          .newspaper-meta {
+            letter-spacing: 2px !important;
+            font-size: 0.6rem !important;
+          }
+          .outcome-main-panel {
+            padding: 1.5rem !important;
+            gap: 1.5rem !important;
+          }
+          .outcome-headline {
+            font-size: 1.8rem !important;
+          }
+          .outcome-status {
+            font-size: 0.7rem !important;
+            letter-spacing: 2px !important;
+          }
+          .outcome-image {
+            max-height: 250px !important;
+          }
+          .image-caption {
+            font-size: 0.6rem !important;
+            padding: 0.8rem !important;
+          }
+          .report-body {
+            flex-direction: column !important;
+            gap: 1.5rem !important;
+          }
+          .report-description {
+            font-size: 1rem !important;
+            text-align: left !important;
+            margin-bottom: 0 !important;
+          }
+          .results-summary-panel {
+            width: 100% !important;
+            padding: 1rem !important;
+          }
+          .result-item {
+            font-size: 0.9rem !important;
+          }
+          .outcome-actions {
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+          }
+          .return-btn, .credits-btn {
+            width: 100% !important;
+            padding: 0.8rem !important;
+            font-size: 0.9rem !important;
+          }
+        }
       `}</style>
-
     </div>
   );
 }

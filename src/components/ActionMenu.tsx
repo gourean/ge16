@@ -160,28 +160,28 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
   };
 
   return (
-    <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', width: '95%' }}>
+    <div className="action-menu-container" style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', width: '95%' }}>
       
       {open && (
-        <div className="glass-panel animate-fade-in" style={{ padding: '1.5rem', marginBottom: '10px', width: 'fit-content', maxWidth: '1400px', position: 'relative' }}>
+        <div className="glass-panel animate-fade-in action-plan-panel" style={{ padding: '1.5rem', marginBottom: '10px', width: 'fit-content', maxWidth: '1400px', position: 'relative' }}>
           
-          <div className="flex-between" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem' }}>
+          <div className="flex-between action-plan-header" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem' }}>
             <div className="flex-column">
               <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-blue)', textTransform: 'uppercase', letterSpacing: '2px' }}>Strategic Action Plan</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Deploy resources to sway voters</span>
+                <span className="action-subtext" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Deploy resources to sway voters</span>
                 {activeSeat && (
-                  <>
-                    <span style={{ color: 'var(--border-glass)' }}>|</span>
+                  <div className="target-info" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="desktop-only" style={{ color: 'var(--border-glass)' }}>|</span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--accent-teal)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Target size={12} /> Targeting: {activeSeat.name}, {activeSeat.state}
+                      <Target size={12} /> Targeting: {activeSeat.name}
                     </span>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
             <button 
-              className="glass-button flex-center" 
+              className="glass-button flex-center close-btn" 
               onClick={() => setOpen(false)}
               style={{ padding: '0.5rem', borderRadius: '50%', width: '32px', height: '32px' }}
             >
@@ -189,7 +189,7 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'nowrap', justifyContent: 'center' }}>
+          <div className="action-buttons-grid" style={{ display: 'flex', gap: '0.8rem', flexWrap: 'nowrap', justifyContent: 'center' }}>
             <ActionBtn 
               icon={<Megaphone size={20} />} 
               label="Ceramah" 
@@ -246,30 +246,30 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
       )}
 
       {/* Campaign Dashboard Bottom Bar */}
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: '1200px' }}>
+      <div className="bottom-bar-layout" style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: '1200px' }}>
         
         {/* Resources & Stability - Centered Status Bar */}
-        <div className="glass-panel" style={{ padding: '0.5rem 1.5rem', display: 'flex', gap: '2rem', alignItems: 'center', background: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.1)' }}>
-          <div className="flex-column" style={{ alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Available Funds</span>
+        <div className="glass-panel resource-bar" style={{ padding: '0.5rem 1.5rem', display: 'flex', gap: '2rem', alignItems: 'center', background: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.1)' }}>
+          <div className="flex-column resource-item" style={{ alignItems: 'flex-start' }}>
+            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Funds</span>
             <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
               RM {(playerState.funds / 1000000).toFixed(1)}M
             </span>
           </div>
           
-          <div style={{ width: '1px', height: '28px', background: 'var(--border-glass)' }}></div>
+          <div className="desktop-only" style={{ width: '1px', height: '28px', background: 'var(--border-glass)' }}></div>
           
-          <div className="flex-column" style={{ alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Political Capital</span>
+          <div className="flex-column resource-item" style={{ alignItems: 'flex-start' }}>
+            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>PC</span>
             <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-teal)' }}>
-              {playerState.politicalCapital} PC
+              {playerState.politicalCapital}
             </span>
           </div>
 
-          <div style={{ width: '1px', height: '28px', background: 'var(--border-glass)' }}></div>
+          <div className="desktop-only" style={{ width: '1px', height: '28px', background: 'var(--border-glass)' }}></div>
 
           {/* Stability Widget */}
-          <div className="flex-column" style={{ alignItems: 'flex-start', minWidth: '120px' }}>
+          <div className="flex-column stability-widget" style={{ alignItems: 'flex-start', minWidth: '120px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '2px' }}>
                 <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Stability</span>
                 <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: playerState.stability < 50 ? '#ff5252' : '#00e676' }}>{Math.round(playerState.stability)}%</span>
@@ -286,26 +286,26 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '100px' }}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Actions Left</span>
+        <div className="glass-panel actions-count-panel" style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '80px' }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Actions</span>
           <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: actionsRemaining > 0 ? 'var(--accent-teal)' : '#ff5252' }}>
-            {actionsRemaining} / 3
+            {actionsRemaining}
           </span>
         </div>
 
         <button 
-          className={`glass-button ${open ? 'active' : ''}`}
+          className={`glass-button plan-btn ${open ? 'active' : ''}`}
           onClick={() => {
             setOpen(!open);
             playClick();
           }}
           style={{ padding: '1rem 2rem', fontSize: '1.1rem', minWidth: '160px' }}
         >
-          {open ? 'Back to Map' : 'Plan Action'}
+          {open ? 'Back' : 'Plan Action'}
         </button>
         
         <button 
-          className="glass-button active pulse-glow" 
+          className="glass-button active pulse-glow end-day-btn" 
           onClick={() => {
             pushNotification({
               title: "Day Complete",
@@ -325,6 +325,66 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
         </button>
       </div>
 
+      <style>{`
+        @media (max-width: 1024px) {
+          .action-menu-container {
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 10px) !important;
+            width: 98% !important;
+            gap: 0.5rem !important;
+          }
+          .action-plan-panel {
+            width: 100% !important;
+            padding: 1rem !important;
+            margin-bottom: 5px !important;
+          }
+          .action-plan-header {
+            margin-bottom: 1rem !important;
+          }
+          .action-buttons-grid {
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+          }
+          .action-buttons-grid > button {
+            width: calc(33.33% - 0.4rem) !important;
+            padding: 0.5rem !important;
+          }
+          .bottom-bar-layout {
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+          }
+          .resource-bar {
+            width: 100% !important;
+            padding: 0.4rem 1rem !important;
+            gap: 1rem !important;
+            order: 1;
+          }
+          .resource-item span:first-child {
+            font-size: 0.5rem !important;
+          }
+          .resource-item span:last-child {
+            font-size: 0.9rem !important;
+          }
+          .actions-count-panel {
+            flex: 1 !important;
+            order: 2;
+            padding: 0.4rem !important;
+            min-width: 0 !important;
+          }
+          .plan-btn, .end-day-btn {
+            flex: 2 !important;
+            order: 2;
+            padding: 0.6rem 1rem !important;
+            font-size: 0.9rem !important;
+            min-width: 0 !important;
+          }
+          .stability-widget {
+            min-width: 80px !important;
+          }
+          .target-info {
+             margin-top: 2px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

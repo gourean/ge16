@@ -196,38 +196,38 @@ export default function Manifesto() {
   };
 
   return (
-    <div className="flex-column" style={{ height: '100vh', padding: '0.75rem 2rem', background: '#0a0a0c', color: 'white', boxSizing: 'border-box', overflow: 'hidden' }}>
-      <div className="flex-between" style={{ marginBottom: '1rem', width: '100%', maxWidth: '1400px', margin: '0 auto 1rem' }}>
+    <div className="flex-column manifesto-page" style={{ height: '100vh', padding: '0.75rem 2rem', background: '#0a0a0c', color: 'white', boxSizing: 'border-box', overflow: 'hidden' }}>
+      <div className="flex-between manifesto-header" style={{ marginBottom: '1rem', width: '100%', maxWidth: '1400px', margin: '0 auto 1rem' }}>
         <button
           onClick={handleExit}
-          className="glass-button"
+          className="glass-button exit-btn"
           style={{ padding: '0.6rem 1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px', borderColor: 'rgba(255, 82, 82, 0.3)', color: '#ff5252' }}
         >
-          <LogOut size={16} /> Exit Game
+          <LogOut size={16} /> <span className="desktop-only">Exit Game</span>
         </button>
 
-        <h1 style={{ fontSize: '2rem', background: 'var(--grad-highlight)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
+        <h1 className="manifesto-title" style={{ fontSize: '2rem', background: 'var(--grad-highlight)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
           Manifesto
         </h1>
 
-        <div style={{ width: '120px' }}></div>
+        <div className="header-spacer" style={{ width: '120px' }}></div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 480px', gap: '2rem', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+      <div className="manifesto-content" style={{ display: 'grid', gridTemplateColumns: '1fr 480px', gap: '2rem', maxWidth: '1400px', margin: '0 auto', width: '100%', overflow: 'hidden' }}>
 
         {/* LEFT: Policy List */}
-        <div className="glass-panel" style={{ padding: '1rem 1.5rem', overflowY: 'auto', maxHeight: 'calc(100vh - 120px)' }}>
+        <div className="glass-panel policy-list-container" style={{ padding: '1rem 1.5rem', overflowY: 'auto' }}>
           <div className="flex-column" style={{ gap: '0rem' }}>
             {Object.entries(groupedItems).map(([category, items]) => (
-              <div key={category} style={{ marginBottom: '2rem' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--accent-blue)', opacity: 0.6, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '0.05em', paddingLeft: '0.5rem' }}>
+              <div key={category} className="policy-category" style={{ marginBottom: '2rem' }}>
+                <div className="category-label" style={{ fontSize: '0.75rem', color: 'var(--accent-blue)', opacity: 0.6, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '0.05em', paddingLeft: '0.5rem' }}>
                   {category}
                 </div>
                 <div className="flex-column" style={{ gap: '0.6rem' }}>
                   {items.map((item) => (
                     <div key={item.id} className="policy-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
-                      <div style={{ flex: 1, paddingRight: '2rem' }}>
-                        <div style={{ fontSize: '1.05rem', fontWeight: '500' }}>{item.topic}</div>
+                      <div className="policy-info" style={{ flex: 1, paddingRight: '2rem' }}>
+                        <div className="policy-topic" style={{ fontSize: '1.05rem', fontWeight: '500' }}>{item.topic}</div>
                       </div>
 
                       <div className="segmented-control">
@@ -268,29 +268,29 @@ export default function Manifesto() {
         </div>
 
         {/* RIGHT: Radar & Lock-in */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', overflow: 'hidden', height: 'calc(100vh - 120px)' }}>
-          <div className="glass-panel" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-            <h3 style={{ marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '1rem' }}>Sentiment Impact</h3>
-            <div style={{ height: '350px', width: '100%' }}>
+        <div className="manifesto-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', overflow: 'hidden' }}>
+          <div className="glass-panel radar-container" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+            <h3 className="sidebar-heading" style={{ marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '1rem' }}>Sentiment Impact</h3>
+            <div className="radar-chart-wrapper" style={{ height: '350px', width: '100%' }}>
               <Radar data={radarData} options={radarOptions} />
             </div>
           </div>
 
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div className="glass-panel" style={{ padding: '0.75rem', background: 'rgba(255, 193, 7, 0.05)', borderColor: 'rgba(255, 193, 7, 0.2)' }}>
-              <p style={{ fontSize: '0.8rem', color: '#ffc107', display: 'flex', gap: '8px', lineHeight: '1.3', margin: 0 }}>
+          <div className="sidebar-footer" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div className="glass-panel warning-panel" style={{ padding: '0.75rem', background: 'rgba(255, 193, 7, 0.05)', borderColor: 'rgba(255, 193, 7, 0.2)' }}>
+              <p className="warning-text" style={{ fontSize: '0.8rem', color: '#ffc107', display: 'flex', gap: '8px', lineHeight: '1.3', margin: 0 }}>
                 <AlertCircle size={20} style={{ flexShrink: 0 }} />
                 Finalize your manifesto to begin the campaign. Your stances will alter popularity and set ideological tags.
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div className="sidebar-actions" style={{ display: 'flex', gap: '0.75rem' }}>
               <button
                 onClick={handleSkipManifesto}
-                className="glass-button"
+                className="glass-button skip-btn"
                 style={{ flex: 1, padding: '0.75rem', borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-muted)', fontSize: '0.85rem' }}
               >
-                Skip Manifesto
+                Skip <span className="desktop-only">Manifesto</span>
               </button>
 
               <button
@@ -299,7 +299,7 @@ export default function Manifesto() {
                   handleFinalize();
                   playClick();
                 }}
-                className={`glass-button ${isComplete ? 'active pulse-glow' : 'disabled'}`}
+                className={`glass-button finalize-btn ${isComplete ? 'active pulse-glow' : 'disabled'}`}
                 style={{ flex: 1.5, fontSize: '1rem', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               >
                 Finalize <ChevronRight size={18} />
@@ -422,6 +422,51 @@ export default function Manifesto() {
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        @media (max-width: 1024px) {
+          .manifesto-page {
+            padding: 1rem !important;
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: 100vh;
+          }
+          .manifesto-content {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          .manifesto-sidebar {
+            height: auto !important;
+            order: -1;
+          }
+          .policy-list-container {
+            max-height: none !important;
+            overflow: visible !important;
+          }
+          .manifesto-title {
+            font-size: 1.5rem !important;
+          }
+          .header-spacer {
+            width: 40px !important;
+          }
+          .policy-row {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 1rem;
+          }
+          .segmented-control {
+            width: 100%;
+          }
+          .segment-btn {
+            flex: 1;
+            padding: 0.5rem 0.2rem !important;
+            font-size: 0.8rem !important;
+          }
+          .radar-chart-wrapper {
+            height: 280px !important;
+          }
+        }
       `}</style>
     </div>
   );

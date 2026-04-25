@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
+import { Newspaper, ChevronDown, ChevronUp, FastForward, Play, Pause, Zap } from 'lucide-react';
 
 export default function PostElection() {
   const { seats, playerState, factionNames, factionColors, factionParties, setGamePhase } = useGameStore();
   
+  const [activeView, setActiveView] = useState<'tally' | 'feed'>('tally');
+
   // Shuffled seats for random intake
   const shuffledSeats = useMemo(() => {
     return [...seats].sort(() => Math.random() - 0.5);
@@ -196,11 +199,11 @@ export default function PostElection() {
   }, [isComplete]);
 
   return (
-    <div className="flex-column" style={{ height: '100vh', overflow: 'hidden', background: '#0a0a0c', color: 'white' }}>
+    <div className="flex-column" style={{ height: '100dvh', overflow: 'hidden', background: '#0a0a0c', color: 'white' }}>
       
-      <div className="glass-panel" style={{ margin: '1rem', border: 'none', background: 'var(--accent-red)', padding: '0.6rem 2rem', display: 'flex', alignItems: 'center', gap: '2rem', zIndex: 100, position: 'relative', borderRadius: '12px' }}>
+      <div className="glass-panel live-banner" style={{ margin: '1rem', border: 'none', background: 'var(--accent-red)', padding: '0.6rem 2rem', display: 'flex', alignItems: 'center', gap: '2rem', zIndex: 100, position: 'relative', borderRadius: '12px' }}>
         <div style={{ fontWeight: '900', fontSize: '1.2rem', textTransform: 'uppercase', letterSpacing: '2px', flexShrink: 0, zIndex: 10 }}>LIVE UPDATE</div>
-        <div style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', position: 'relative', height: '1.5rem' }}>
+        <div className="ticker-container" style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', position: 'relative', height: '1.5rem' }}>
            {activeTickerItems.map(item => (
              <div
                key={item.id}
@@ -220,61 +223,82 @@ export default function PostElection() {
              </div>
            ))}
         </div>
-        <div className="glass-panel" style={{ background: 'rgba(0,0,0,0.3)', padding: '4px 12px', border: 'none', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', flexShrink: 0 }}>
+        <div className="glass-panel declared-badge" style={{ background: 'rgba(0,0,0,0.3)', padding: '4px 12px', border: 'none', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', flexShrink: 0 }}>
           {currentIndex} / {seats.length} SEATS DECLARED
         </div>
       </div>
 
-      <div className="flex-row" style={{ flex: 1, padding: '0 1rem 1rem 1rem', gap: '1rem', overflow: 'hidden', alignItems: 'flex-start' }}>
+      <div className="glass-panel flex-between live-controls-panel" style={{ margin: '0 1rem 1rem 1rem', padding: '0.8rem 1.5rem', zIndex: 10 }}>
+        <div className="speed-controls" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold', marginRight: '5px' }}>SPEED:</span>
+          <button 
+            className={`glass-button ${speed === 1000 ? 'active' : ''}`} 
+            style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: 'bold' }} 
+            onClick={() => { playClick(); setSpeed(1000); }}
+            title="Slow Speed"
+          >
+            1x
+          </button>
+          <button 
+            className={`glass-button ${speed === 200 ? 'active' : ''}`} 
+            style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: 'bold' }} 
+            onClick={() => { playClick(); setSpeed(200); }}
+            title="Fast Speed"
+          >
+            5x
+          </button>
+          <button 
+            className={`glass-button ${speed === 20 ? 'active' : ''}`} 
+            style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: 'bold' }} 
+            onClick={() => { playClick(); setSpeed(20); }}
+            title="Turbo Speed"
+          >
+            <Zap size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />
+          </button>
+        </div>
+        
+        <div className="control-buttons" style={{ display: 'flex', gap: '0.8rem' }}>
+          {!isComplete && (
+            <>
+              <button className="glass-button" style={{ padding: '6px 15px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => { playClick(); setIsPaused(!isPaused); }}>
+                {isPaused ? <Play size={14} /> : <Pause size={14} />}
+                <span className="desktop-only">{isPaused ? 'RESUME' : 'PAUSE'}</span>
+              </button>
+              <button className="glass-button" style={{ padding: '6px 15px', fontSize: '0.8rem', borderColor: 'rgba(255,255,255,0.2)' }} onClick={handleSkip}>
+                <span className="desktop-only">SKIP ALL</span>
+                <FastForward size={14} className="mobile-only" />
+              </button>
+            </>
+          )}
+          {isComplete && (
+            <button 
+              className="glass-button active pulse-glow" 
+              style={{ padding: '0.6rem 2rem', fontWeight: 'bold', fontSize: '0.9rem' }}
+              onClick={() => {
+                playClick();
+                setGamePhase('OUTCOME');
+              }}
+            >
+              PROCEED
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-row post-election-content" style={{ flex: 1, padding: '0 1rem 1rem 1rem', gap: '1rem', overflow: 'hidden', alignItems: 'flex-start' }}>
         
         {/* LEFT COLUMN: Newsfeed (Scrollable) */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden', height: '100%', minWidth: 0 }}>
-          
-          {/* Controls */}
-          <div className="glass-panel flex-between" style={{ padding: '0.8rem 1.5rem', flexShrink: 0 }}>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold', marginRight: '5px' }}>SPEED:</span>
-              <button 
-                className={`glass-button ${speed === 1000 ? 'active' : ''}`} 
-                style={{ padding: '6px 12px', fontSize: '0.7rem' }} 
-                onClick={() => { playClick(); setSpeed(1000); }}
-              >SLOW</button>
-              <button 
-                className={`glass-button ${speed === 200 ? 'active' : ''}`} 
-                style={{ padding: '6px 12px', fontSize: '0.7rem' }} 
-                onClick={() => { playClick(); setSpeed(200); }}
-              >FAST 1</button>
-              <button 
-                className={`glass-button ${speed === 20 ? 'active' : ''}`} 
-                style={{ padding: '6px 12px', fontSize: '0.7rem' }} 
-                onClick={() => { playClick(); setSpeed(20); }}
-              >FAST 2</button>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '0.8rem' }}>
-              {!isComplete && (
-                <>
-                  <button className="glass-button" style={{ padding: '6px 15px', fontSize: '0.8rem' }} onClick={() => { playClick(); setIsPaused(!isPaused); }}>
-                    {isPaused ? 'RESUME' : 'PAUSE'}
-                  </button>
-                  <button className="glass-button" style={{ padding: '6px 15px', fontSize: '0.8rem', borderColor: 'rgba(255,255,255,0.2)' }} onClick={handleSkip}>SKIP ALL</button>
-                </>
-              )}
-              {isComplete && (
-                <button 
-                  className="glass-button active pulse-glow" 
-                  style={{ padding: '0.6rem 2rem', fontWeight: 'bold', fontSize: '0.9rem' }}
-                  onClick={() => {
-                    playClick();
-                    setGamePhase('OUTCOME');
-                  }}
-                >
-                  PROCEED TO RESOLUTION
-                </button>
-              )}
-            </div>
+        <div className={`newsfeed-col ${activeView !== 'feed' ? 'mobile-hidden' : ''}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden', height: '100%', minWidth: 0 }}>
+          <div className="flex-between mobile-only" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem' }}>
+             <h2 style={{ letterSpacing: '1px', fontSize: '1rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>Live News Feed</h2>
+             <button 
+               onClick={() => { playClick(); setActiveView('tally'); }} 
+               className="glass-button"
+               style={{ padding: '6px 12px', fontSize: '0.7rem' }}
+             >
+               Show Tally
+             </button>
           </div>
-
           <div 
              className="glass-panel" 
              style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}
@@ -303,8 +327,17 @@ export default function PostElection() {
         </div>
 
         {/* RIGHT COLUMN: Election Result (Stats) */}
-        <div className="glass-panel" style={{ width: '400px', flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '1.5rem', height: '100%', minWidth: 0 }}>
-          <h2 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem', letterSpacing: '1px', fontSize: '1.2rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Election Tally</h2>
+        <div className={`glass-panel tally-col ${activeView !== 'tally' ? 'mobile-hidden' : ''}`} style={{ width: '400px', flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '1.5rem', height: '100%', minWidth: 0 }}>
+          <div className="flex-between" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem' }}>
+            <h2 style={{ letterSpacing: '1px', fontSize: '1.2rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>Election Tally</h2>
+            <button 
+              onClick={() => { playClick(); setActiveView('feed'); }} 
+              className="glass-button mobile-only"
+              style={{ padding: '6px 12px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+            >
+              <Newspaper size={14} /> Show Feed
+            </button>
+          </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', flex: 1, overflowY: 'auto', paddingRight: '0.5rem' }}>
             {Object.entries(factionNames).filter(([id]) => id !== 'Undecided' && (id !== 'Faction3' || factionParties.Faction3?.length > 0)).sort((a,b) => stats.counts[b[0] as keyof typeof stats.counts] - stats.counts[a[0] as keyof typeof stats.counts]).map(([id, name]) => {
@@ -348,7 +381,6 @@ export default function PostElection() {
              </div>
           </div>
         </div>
-
       </div>
 
       <style>{`
@@ -368,7 +400,57 @@ export default function PostElection() {
           70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
           100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
+
+        @media (max-width: 1024px) {
+          .post-election-content {
+            flex-direction: column !important;
+            padding: 0.5rem !important;
+          }
+          .newsfeed-col, .tally-col {
+            width: 100% !important;
+            height: auto !important;
+            flex: 1 !important;
+            order: 2;
+          }
+          .mobile-hidden {
+            display: none !important;
+          }
+          .live-banner {
+            margin: 0.5rem !important;
+            padding: 0.4rem 1rem !important;
+            gap: 0.5rem !important;
+          }
+          .live-banner div:first-child {
+            font-size: 0.8rem !important;
+          }
+          .live-banner .ticker-container {
+            font-size: 0.8rem !important;
+          }
+          .live-banner .declared-badge {
+            font-size: 0.6rem !important;
+            padding: 2px 8px !important;
+          }
+          .speed-controls {
+             display: flex !important;
+             gap: 0.3rem !important;
+          }
+          .speed-controls button {
+             padding: 4px 8px !important;
+             min-width: 32px !important;
+          }
+          .control-buttons {
+             gap: 0.4rem !important;
+          }
+          .control-buttons button {
+             padding: 4px 10px !important;
+          }
+          .live-controls-panel {
+            margin: 0 0.5rem 0.5rem 0.5rem !important;
+            padding: 0.6rem !important;
+          }
+        }
       `}</style>
+
     </div>
   );
 }

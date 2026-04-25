@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import * as d3 from 'd3';
 import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus, Minus, Home } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus, Minus, Home, Compass } from 'lucide-react';
 
 export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string) => void }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -11,6 +11,7 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
   const seats = useGameStore(state => state.seats);
   const factionColors = useGameStore(state => state.factionColors);
   const [svgLoaded, setSvgLoaded] = useState(false);
+  const [showNav, setShowNav] = useState(false);
 
   // List of seats that are enclaves (physically inside another seat)
   // These need special handling so they aren't covered by their containers when raised.
@@ -300,47 +301,81 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
       />
       
       {/* Floating Navigation Controls */}
-      <div className="glass-panel animate-fade-in" style={{ 
+      <div className="map-nav-wrapper" style={{ 
         position: 'absolute', 
         bottom: '24px', 
         right: '24px', 
         display: 'flex', 
         flexDirection: 'column', 
+        alignItems: 'flex-end',
         gap: '12px',
-        padding: '12px',
         zIndex: 20
       }}>
-        {/* Pan Controls */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 40px)', gap: '4px', justifyItems: 'center' }}>
-            <div />
-            <button className="glass-button" style={{ padding: '8px' }} onClick={() => { panMap(0, 100); playClick(); }} title="Move Up (W)">
-                <ChevronUp size={20} />
-            </button>
-            <div />
-            <button className="glass-button" style={{ padding: '8px' }} onClick={() => { panMap(100, 0); playClick(); }} title="Move Left (A)">
-                <ChevronLeft size={20} />
-            </button>
-            <button className="glass-button" style={{ padding: '8px' }} onClick={() => { panMap(0, -100); playClick(); }} title="Move Down (S)">
-                <ChevronDown size={20} />
-            </button>
-            <button className="glass-button" style={{ padding: '8px' }} onClick={() => { panMap(-100, 0); playClick(); }} title="Move Right (D)">
-                <ChevronRight size={20} />
-            </button>
-        </div>
-        
-        {/* Zoom & Home Controls */}
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', borderTop: '1px solid var(--border-glass)', paddingTop: '12px' }}>
-            <button className="glass-button" style={{ padding: '8px' }} onClick={() => { zoomMap(1.4); playClick(); }} title="Zoom In (+)">
-                <Plus size={20} />
-            </button>
-            <button className="glass-button" style={{ padding: '8px' }} onClick={() => { zoomMap(0.7); playClick(); }} title="Zoom Out (-)">
-                <Minus size={20} />
-            </button>
-            <button className="glass-button" style={{ padding: '8px' }} onClick={() => { resetMap(); playClick(); }} title="Reset">
-                <Home size={20} />
-            </button>
+        {/* Toggle Button for Mobile */}
+        <button 
+          className="glass-button mobile-only nav-toggle-btn" 
+          onClick={() => { setShowNav(!showNav); playClick(); }}
+          style={{ padding: '12px', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+          title="Toggle Navigation"
+        >
+          <Compass size={24} />
+        </button>
+
+        <div className={`glass-panel animate-fade-in nav-controls-panel ${!showNav ? 'mobile-hidden' : ''}`} style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '12px',
+          padding: '12px',
+        }}>
+          {/* Pan Controls */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 40px)', gap: '4px', justifyItems: 'center' }}>
+              <div />
+              <button className="glass-button" style={{ padding: '8px' }} onClick={() => { panMap(0, 100); playClick(); }} title="Move Up (W)">
+                  <ChevronUp size={20} />
+              </button>
+              <div />
+              <button className="glass-button" style={{ padding: '8px' }} onClick={() => { panMap(100, 0); playClick(); }} title="Move Left (A)">
+                  <ChevronLeft size={20} />
+              </button>
+              <button className="glass-button" style={{ padding: '8px' }} onClick={() => { panMap(0, -100); playClick(); }} title="Move Down (S)">
+                  <ChevronDown size={20} />
+              </button>
+              <button className="glass-button" style={{ padding: '8px' }} onClick={() => { panMap(-100, 0); playClick(); }} title="Move Right (D)">
+                  <ChevronRight size={20} />
+              </button>
+          </div>
+          
+          {/* Zoom & Home Controls */}
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', borderTop: '1px solid var(--border-glass)', paddingTop: '12px' }}>
+              <button className="glass-button" style={{ padding: '8px' }} onClick={() => { zoomMap(1.4); playClick(); }} title="Zoom In (+)">
+                  <Plus size={20} />
+              </button>
+              <button className="glass-button" style={{ padding: '8px' }} onClick={() => { zoomMap(0.7); playClick(); }} title="Zoom Out (-)">
+                  <Minus size={20} />
+              </button>
+              <button className="glass-button" style={{ padding: '8px' }} onClick={() => { resetMap(); playClick(); }} title="Reset">
+                  <Home size={20} />
+              </button>
+          </div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 1024px) {
+          .map-nav-wrapper {
+            bottom: 150px !important; /* Move above action menu */
+            right: 12px !important;
+          }
+          .mobile-hidden {
+            display: none !important;
+          }
+        }
+        @media (min-width: 1025px) {
+          .nav-toggle-btn {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

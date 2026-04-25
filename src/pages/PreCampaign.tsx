@@ -8,10 +8,10 @@ import { playClick } from '../utils/sfx';
 
 export default function PreCampaign() {
   const { selectCoalition, setGamePhase, seats, loadInitialSeats, pushNotification } = useGameStore();
-  
+
   const [gameMode, setGameMode] = useState<'HISTORICAL' | 'CUSTOM'>('HISTORICAL');
   const [selectedParties, setSelectedParties] = useState<string[]>([]);
-  const [allianceName, setAllianceName] = useState('My Custom Alliance');
+  const [allianceName, setAllianceName] = useState('Custom Alliance');
   const [opponentMode, setOpponentMode] = useState<'1v1' | '3-corner'>('1v1');
   const [explicitSwings, setExplicitSwings] = useState<DemographicSwing[]>([]);
   const [selectedColor, setSelectedColor] = useState<string>(''); // For custom
@@ -26,7 +26,7 @@ export default function PreCampaign() {
       playClick();
       const isAdding = !prev.includes(id);
       const next = isAdding ? [...prev, id] : prev.filter(p => p !== id);
-      
+
       // Auto-set color if none selected and adding first party
       if (isAdding && next.length === 1 && !selectedColor) {
         const party = availableParties.find(p => p.id === id);
@@ -72,13 +72,13 @@ export default function PreCampaign() {
 
     // Refactor the seats to Faction1, 2, 3 based on initial_state.json numbers
     const modifiedSeats = applyFactionsToSeats(seats, finalParties, unselectedParties, finalOpponentMode, explicitSwings, gameMode === 'HISTORICAL');
-    
+
     // Load the newly built seats into the store
     loadInitialSeats(modifiedSeats);
 
     // Compute opponent faction info
     const oppFactions = distributeOpponents(unselectedParties, finalOpponentMode);
-    
+
     let faction2Name = 'Opposition A';
     let faction3Name = 'Opposition B';
     let f2Color = '#0ea5e9';
@@ -99,7 +99,7 @@ export default function PreCampaign() {
 
       const f2Info = getCoalitionInfoForParties(oppFactions.faction2);
       const f3Info = getCoalitionInfoForParties(oppFactions.faction3);
-      
+
       if (f2Info) {
         faction2Name = f2Info.name;
         f2Color = f2Info.color;
@@ -128,7 +128,7 @@ export default function PreCampaign() {
     } else {
       // Custom mode
       const leadColor = selectedColor || (finalParties.length > 0 ? finalParties[0].color : '#ef4444');
-      
+
       // Opponents in custom mode
       let f2Color = '#0ea5e9';
       let f3Color = '#2563eb';
@@ -145,13 +145,13 @@ export default function PreCampaign() {
         Faction2: f2Color,
         Faction3: f3Color,
       }, {
-        faction2Name: '', 
+        faction2Name: '',
         faction2Parties: oppFactions.faction2.map(p => p.id),
         faction3Name: '',
         faction3Parties: oppFactions.faction3.map(p => p.id),
       });
     }
-    
+
     playClick();
     setGamePhase('MANIFESTO');
   };
@@ -161,41 +161,41 @@ export default function PreCampaign() {
   const synergyVal = calculateSynergy(currentSelectedPartyObjs);
 
   return (
-    <div className="flex-column flex-center" style={{ minHeight: '100vh', padding: '2rem' }}>
-      <div className="glass-panel animate-fade-in" style={{ padding: '3rem', maxWidth: '1000px', width: '100%' }}>
+    <div className="flex-column flex-center precampaign-container" style={{ minHeight: '100vh', padding: '2rem' }}>
+      <div className="glass-panel animate-fade-in content-card" style={{ padding: '3rem', maxWidth: '1000px', width: '100%' }}>
         <div style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: '3rem', marginBottom: '1rem', background: 'var(--grad-highlight)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <h1 className="main-title" style={{ fontSize: '3rem', marginBottom: '1rem', background: 'var(--grad-highlight)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             GE16: The Race to Putrajaya
           </h1>
-          <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>
+          <p className="sub-title" style={{ fontSize: '1.2rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>
             Choose your game mode and build the alliance to lead Malaysia.
           </p>
         </div>
 
-        <div className="flex-center" style={{ gap: '1rem', marginBottom: '2rem' }}>
-          <button 
+        <div className="flex-center mode-toggle" style={{ gap: '1rem', marginBottom: '2rem' }}>
+          <button
             className={`glass-button ${gameMode === 'HISTORICAL' ? 'active' : ''}`}
             onClick={() => {
               setGameMode('HISTORICAL');
               playClick();
             }}
           >
-            Historical Coalitions
+            Historical <span className="desktop-only">Coalitions</span>
           </button>
-          <button 
+          <button
             className={`glass-button ${gameMode === 'CUSTOM' ? 'active' : ''}`}
             onClick={() => {
               setGameMode('CUSTOM');
               playClick();
             }}
           >
-            Custom Alliance
+            Custom <span className="desktop-only">Alliance</span>
           </button>
         </div>
-        
+
         {/* HISTORICAL MODE */}
         {gameMode === 'HISTORICAL' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+          <div className="historical-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
             {historicalCoalitions.map(c => {
               const isSelected = selectedHistorical === c.id;
               let Icon = Shield;
@@ -205,17 +205,17 @@ export default function PreCampaign() {
               else { Icon = Target; desc = 'Centrist, Establishment.'; }
 
               return (
-                <div 
+                <div
                   key={c.id}
-                  className={`glass-panel cursor-pointer ${isSelected ? 'active pulse-glow' : ''}`}
+                  className={`glass-panel coalition-card cursor-pointer ${isSelected ? 'active pulse-glow' : ''}`}
                   style={{ padding: '2rem 1.5rem', cursor: 'pointer', textAlign: 'center', borderColor: isSelected ? 'var(--accent-blue)' : 'var(--border-glass)' }}
                   onClick={() => {
                     setSelectedHistorical(c.id);
                     playClick();
                   }}
                 >
-                  <div className="flex-center" style={{ marginBottom: '1rem' }}>
-                    <Icon size={48} />
+                  <div className="flex-center icon-container" style={{ marginBottom: '1rem' }}>
+                    <Icon size={48} className="coalition-icon" />
                   </div>
                   <h4 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>{c.name}</h4>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{desc}</p>
@@ -227,14 +227,14 @@ export default function PreCampaign() {
 
         {/* CUSTOM MODE */}
         {gameMode === 'CUSTOM' && (
-          <div style={{ marginBottom: '3rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
+          <div className="custom-mode-container" style={{ marginBottom: '3rem' }}>
+            <div className="custom-config-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Alliance Name</label>
-                <input 
-                  type="text" 
-                  value={allianceName} 
-                  onChange={e => setAllianceName(e.target.value)} 
+                <input
+                  type="text"
+                  value={allianceName}
+                  onChange={e => setAllianceName(e.target.value)}
                   style={{ width: '100%', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)', borderRadius: '8px', color: 'white' }}
                 />
               </div>
@@ -242,13 +242,13 @@ export default function PreCampaign() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Theme Color</label>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {['#ed1c24', '#0033a0', '#003153', '#008000', '#00adef', '#f37021', '#8b5cf6'].map(c => (
-                    <div 
+                    <div
                       key={c}
                       onClick={() => {
                         setSelectedColor(c);
                         playClick();
                       }}
-                      style={{ 
+                      style={{
                         width: '32px', height: '32px', borderRadius: '4px', background: c, cursor: 'pointer',
                         border: selectedColor === c ? '2px solid white' : '1px solid rgba(255,255,255,0.2)',
                         boxShadow: selectedColor === c ? '0 0 10px ' + c : 'none'
@@ -258,53 +258,51 @@ export default function PreCampaign() {
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Opponent Configuration</label>
-                <select 
-                  value={opponentMode} 
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Opposition</label>
+                <select
+                  value={opponentMode}
                   onChange={e => {
                     setOpponentMode(e.target.value as any);
                     playClick();
                   }}
                   style={{ width: '100%', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)', borderRadius: '8px', color: 'white' }}
                 >
-                  <option value="1v1" style={{ color: 'black' }}>Unified Opposition (1v1)</option>
-                  <option value="3-corner" style={{ color: 'black' }}>Fragmented Opposition (3-Corner Fight)</option>
+                  <option value="1v1" style={{ color: 'black' }}>Unified (1v1)</option>
+                  <option value="3-corner" style={{ color: 'black' }}>Fragmented (3-Corner)</option>
                 </select>
               </div>
             </div>
 
-            <div style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '2rem' }}>
-               <div>
-                  <h4 style={{ marginBottom: '0.5rem' }}>Synergy Rating</h4>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: synergyVal >= 1 ? 'var(--accent-teal)' : 'var(--accent-red)' }}>
-                      {(synergyVal * 100).toFixed(0)}%
-                  </div>
-               </div>
-               <div>
-                 <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                    Combine complementary parties (e.g. Reformist + Progressive) for bonuses. 
-                    Clashing ideologies (e.g. Progressive + Islamist) will incur penalties on base support.
-                 </p>
-               </div>
+            <div className="synergy-panel" style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '2rem' }}>
+              <div>
+                <h4 style={{ marginBottom: '0.5rem' }}>Synergy</h4>
+                <div className="synergy-value" style={{ fontSize: '2rem', fontWeight: 'bold', color: synergyVal >= 1 ? 'var(--accent-teal)' : 'var(--accent-red)' }}>
+                  {(synergyVal * 100).toFixed(0)}%
+                </div>
+              </div>
+              <div>
+                <p className="synergy-desc" style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                  Combine complementary parties (e.g. Reformist + Progressive) for bonuses.
+                </p>
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1rem' }}>
+            <div className="party-selection-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1rem' }}>
               {availableParties.map(p => {
                 const isSelected = selectedParties.includes(p.id);
                 return (
-                  <div 
+                  <div
                     key={p.id}
                     onClick={() => toggleParty(p.id)}
-                    className="glass-panel"
-                    style={{ 
-                      padding: '1rem', cursor: 'pointer', textAlign: 'center', 
+                    className="glass-panel party-card"
+                    style={{
+                      padding: '1rem', cursor: 'pointer', textAlign: 'center',
                       background: isSelected ? p.color : 'rgba(255,255,255,0.02)',
                       borderColor: isSelected ? 'transparent' : 'var(--border-glass)'
                     }}
                   >
                     <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.5rem' }}>{p.name}</div>
                     <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{p.ideology}</div>
-                    <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{p.demographic}</div>
                   </div>
                 )
               })}
@@ -312,54 +310,51 @@ export default function PreCampaign() {
           </div>
         )}
 
-        <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-glass)', marginBottom: '2rem' }}>
-          <div className="flex-between" style={{ marginBottom: '1rem' }}>
-             <h4>Demographic Swings (Post-GE15)</h4>
-             <button onClick={() => { setExplicitSwings([...explicitSwings, { id: Date.now().toString(), demographic: 'Malay-Majority', from: 'BN', to: 'PN', amount: 5 }]); playClick(); }} className="glass-button" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Plus size={16} /> Add Swing
-             </button>
+        <div className="swings-section" style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-glass)', marginBottom: '2rem' }}>
+          <div className="flex-between swings-header" style={{ marginBottom: '1rem' }}>
+            <h4>Post-GE15 Swings</h4>
+            <button onClick={() => { setExplicitSwings([...explicitSwings, { id: Date.now().toString(), demographic: 'Malay-Majority', from: 'BN', to: 'PN', amount: 5 }]); playClick(); }} className="glass-button" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Plus size={16} /> <span className="desktop-only">Add Swing</span>
+            </button>
           </div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              Adjust the base historical popularity before the campaign begins. (E.g. Swing 10% from BN to PN in Malay-Majority seats).
-          </p>
-          {explicitSwings.length === 0 && (
-             <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic' }}>No swings applied. Starting with standard GE15 baseline.</div>
+          {explicitSwings.length > 0 && (
+            <div className="swings-list">
+              {explicitSwings.map((swing, idx) => (
+                <div key={swing.id} className="swing-row" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                  <select value={swing.demographic} onChange={e => { const newS = [...explicitSwings]; newS[idx].demographic = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px', flex: 1 }}>
+                    <option value="Malay-Majority">Malay</option>
+                    <option value="Chinese-Majority">Chinese</option>
+                    <option value="Mixed">Mixed</option>
+                    <option value="Bumiputera-Sabah/Sarawak">Bumi</option>
+                  </select>
+                  <input type="number" value={swing.amount} onChange={e => { const newS = [...explicitSwings]; newS[idx].amount = Number(e.target.value); setExplicitSwings(newS); }} style={{ width: '50px', padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }} />
+                  <span style={{ color: 'var(--text-muted)' }}>%</span>
+                  <select value={swing.from} onChange={e => { const newS = [...explicitSwings]; newS[idx].from = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
+                    <option value="PH">PH</option>
+                    <option value="PN">PN</option>
+                    <option value="BN">BN</option>
+                  </select>
+                  <span style={{ color: 'var(--text-muted)' }}>→</span>
+                  <select value={swing.to} onChange={e => { const newS = [...explicitSwings]; newS[idx].to = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
+                    <option value="PH">PH</option>
+                    <option value="PN">PN</option>
+                    <option value="BN">BN</option>
+                  </select>
+                  <button onClick={() => {
+                    setExplicitSwings(explicitSwings.filter(s => s.id !== swing.id))
+                    playClick();
+                  }} style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', padding: '0.5rem' }}>
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
-          {explicitSwings.map((swing, idx) => (
-             <div key={swing.id} style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                <select value={swing.demographic} onChange={e => { const newS = [...explicitSwings]; newS[idx].demographic = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
-                   <option value="Malay-Majority">Malay-Majority</option>
-                   <option value="Chinese-Majority">Chinese-Majority</option>
-                   <option value="Mixed">Mixed</option>
-                   <option value="Bumiputera-Sabah/Sarawak">Bumiputera-Sabah/Sarawak</option>
-                </select>
-                <span style={{ color: 'var(--text-muted)' }}>Swing</span>
-                <input type="number" value={swing.amount} onChange={e => { const newS = [...explicitSwings]; newS[idx].amount = Number(e.target.value); setExplicitSwings(newS); }} style={{ width: '60px', padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }} />
-                <span style={{ color: 'var(--text-muted)' }}>% from</span>
-                <select value={swing.from} onChange={e => { const newS = [...explicitSwings]; newS[idx].from = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
-                   <option value="PH">PH</option>
-                   <option value="PN">PN</option>
-                   <option value="BN">BN</option>
-                </select>
-                <span style={{ color: 'var(--text-muted)' }}>to</span>
-                <select value={swing.to} onChange={e => { const newS = [...explicitSwings]; newS[idx].to = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
-                   <option value="PH">PH</option>
-                   <option value="PN">PN</option>
-                   <option value="BN">BN</option>
-                </select>
-                <button onClick={() => {
-                  setExplicitSwings(explicitSwings.filter(s => s.id !== swing.id))
-                  playClick();
-                }} style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', padding: '0.5rem' }}>
-                   <Trash2 size={18} />
-                </button>
-             </div>
-          ))}
         </div>
 
-        <div className="flex-center">
-          <button 
-            className="glass-button" 
+        <div className="flex-center start-action">
+          <button
+            className="glass-button start-btn"
             style={{ fontSize: '1.2rem', padding: '1rem 3rem', display: 'flex', alignItems: 'center', gap: '10px' }}
             onClick={handleStart}
           >
@@ -368,6 +363,68 @@ export default function PreCampaign() {
         </div>
 
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .precampaign-container {
+            padding: 1rem !important;
+          }
+          .content-card {
+            padding: 1.5rem !important;
+          }
+          .main-title {
+            font-size: 1.8rem !important;
+          }
+          .sub-title {
+            font-size: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .historical-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .coalition-card {
+            padding: 1.2rem !important;
+          }
+          .coalition-icon {
+            width: 32px !important;
+            height: 32px !important;
+          }
+          .custom-config-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .synergy-panel {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 1rem !important;
+            padding: 1rem !important;
+          }
+          .synergy-value {
+            font-size: 1.5rem !important;
+          }
+          .party-selection-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          .party-card {
+            padding: 0.8rem !important;
+          }
+          .party-card div:first-child {
+            font-size: 0.9rem !important;
+          }
+          .swings-section {
+            padding: 1rem !important;
+          }
+          .swing-row {
+            gap: 0.5rem !important;
+          }
+          .start-btn {
+            width: 100% !important;
+            padding: 1rem !important;
+            font-size: 1.1rem !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

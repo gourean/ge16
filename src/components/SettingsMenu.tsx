@@ -17,12 +17,13 @@ const SettingsMenu = () => {
 
   if (!isSettingsOpen) {
     return (
+    <>
       <button 
         onClick={() => {
           setSettingsOpen(true);
           playClick();
         }}
-        className="glass-button"
+        className="glass-button settings-toggle-btn"
         style={{
           position: 'fixed',
           top: '20px',
@@ -36,8 +37,22 @@ const SettingsMenu = () => {
         }}
         title="Settings"
       >
-        <Settings size={24} />
+        <Settings size={24} className="settings-icon" />
       </button>
+      <style>{`
+        @media (max-width: 1024px) {
+          .settings-toggle-btn {
+            top: 70px !important;
+            right: 10px !important;
+            padding: 8px !important;
+          }
+          .settings-icon {
+            width: 18px !important;
+            height: 18px !important;
+          }
+        }
+      `}</style>
+    </>
     );
   }
 
