@@ -42,8 +42,10 @@ const SettingsMenu = () => {
       <style>{`
         @media (max-width: 1024px) {
           .settings-toggle-btn {
-            top: 70px !important;
+            top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
             right: 10px !important;
+            left: auto !important;
+            bottom: auto !important;
             padding: 8px !important;
           }
           .settings-icon {

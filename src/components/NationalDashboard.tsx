@@ -219,8 +219,8 @@ export default function NationalDashboard() {
       <style>{`
         @media (max-width: 1024px) {
           .dashboard-container {
-            padding: 0.4rem 0.5rem !important;
-            top: calc(env(safe-area-inset-top, 0px) + 5px) !important;
+            padding: 0.4rem 45px 0.4rem 0.5rem !important;
+            top: calc(env(safe-area-inset-top, 0px) + 50px) !important;
             width: 100% !important;
             max-width: 100vw !important;
             border-radius: 0 0 12px 12px !important;

@@ -201,7 +201,7 @@ export default function PostElection() {
   return (
     <div className="flex-column" style={{ height: '100dvh', overflow: 'hidden', background: '#0a0a0c', color: 'white' }}>
       
-      <div className="glass-panel live-banner" style={{ margin: '1rem', border: 'none', background: 'var(--accent-red)', padding: '0.6rem 2rem', display: 'flex', alignItems: 'center', gap: '2rem', zIndex: 100, position: 'relative', borderRadius: '12px' }}>
+      <div className="glass-panel live-banner" style={{ margin: 'calc(env(safe-area-inset-top, 0px) + 1rem) 1rem 1rem 1rem', border: 'none', background: 'var(--accent-red)', padding: '0.6rem 2rem', display: 'flex', alignItems: 'center', gap: '2rem', zIndex: 100, position: 'relative', borderRadius: '12px' }}>
         <div style={{ fontWeight: '900', fontSize: '1.2rem', textTransform: 'uppercase', letterSpacing: '2px', flexShrink: 0, zIndex: 10 }}>LIVE UPDATE</div>
         <div className="ticker-container" style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', position: 'relative', height: '1.5rem' }}>
            {activeTickerItems.map(item => (
@@ -402,6 +402,10 @@ export default function PostElection() {
         }
 
         @media (max-width: 1024px) {
+          .live-banner {
+            margin-top: calc(env(safe-area-inset-top, 0px) + 50px) !important;
+            padding-right: 45px !important;
+          }
           .post-election-content {
             flex-direction: column !important;
             padding: 0.5rem !important;
