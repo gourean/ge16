@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useGameStore } from './store/gameStore';
 import PreCampaign from './pages/PreCampaign';
 import Manifesto from './pages/Manifesto';
@@ -13,6 +13,15 @@ import SettingsMenu from './components/SettingsMenu';
 import NotificationModal from './components/NotificationModal';
 import IntroSplash from './components/IntroSplash';
 import type { Seat } from './store/gameStore';
+
+// Scroll to top on every route change
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
 
 // A component to handle route switching based on game state
 const PhaseRouter = () => {
@@ -48,6 +57,7 @@ function App() {
 
   return (
     <HashRouter>
+      <ScrollToTop />
       <PhaseRouter />
       <Routes>
         <Route path="/" element={<PreCampaign />} />
