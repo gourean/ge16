@@ -2,6 +2,8 @@ import type { GameState } from '../store/gameStore';
 
 export interface EventChoice {
   text: string;
+  costFunds?: number;
+  costPC?: number;
   effect: (state: GameState, set: (partial: Partial<GameState>) => void) => void;
 }
 
@@ -44,17 +46,11 @@ export const gameEvents: GameEvent[] = [
       },
       {
          text: 'We have nothing to hide. I am calling for an immediate and independent inquiry. (Costs 20 PC)',
+         costPC: 20,
          effect: (state, set) => {
-             // Costs 20 PC, no popularity hit
-             if (state.playerState.politicalCapital >= 20) {
-                set({ 
-                    playerState: { 
-                        ...state.playerState, 
-                        politicalCapital: state.playerState.politicalCapital - 20 
-                    } 
-                });
-             } else {
-                 // If not enough PC, penalty is worse
+             // Costs 20 PC, no popularity hit (Auto-deducted in store)
+             // Fallback penalty if store somehow misses it (though UI should prevent)
+             if (state.playerState.politicalCapital < 20) {
                  const penalty = 4;
                  const myCoal = state.playerState.currentCoalition;
                  if (!myCoal) return;
@@ -77,13 +73,8 @@ export const gameEvents: GameEvent[] = [
       choices: [
           {
               text: 'We will ensure targeted subsidies reach those who need them most—no Malaysian will be left behind! (Costs 1M)',
+              costFunds: 1000000,
               effect: (state, set) => {
-                 set({
-                     playerState: {
-                         ...state.playerState,
-                         funds: Math.max(0, state.playerState.funds - 1000000)
-                     }
-                 });
                  // Gain 1 popularity nationwide
                  const myCoal = state.playerState.currentCoalition;
                  if (!myCoal) return;
@@ -193,13 +184,9 @@ export const gameEvents: GameEvent[] = [
     choices: [
         {
             text: 'Everyone is innocent until proven guilty in a court of law. We respect the judicial process. (-15 PC)',
-            effect: (state, set) => {
-                set({ 
-                    playerState: { 
-                        ...state.playerState, 
-                        politicalCapital: Math.max(0, state.playerState.politicalCapital - 15) 
-                    } 
-                });
+            costPC: 15,
+            effect: (_state, _set) => {
+                // Cost deducted in store
             }
         },
         {
@@ -317,6 +304,7 @@ export const gameEvents: GameEvent[] = [
     choices: [
         {
             text: 'Borneo is a priority. We will launch an immediate high-level review to fulfill all MA63 obligations! (+10 Borneo Pop, -1M Funds)',
+            costFunds: 1000000,
             effect: (state, set) => {
                 const myCoal = state.playerState.currentCoalition;
                 const newSeats = state.seats.map(s => {
@@ -324,10 +312,7 @@ export const gameEvents: GameEvent[] = [
                     if (s.isBorneo) newTracker[myCoal] = Math.min(100, newTracker[myCoal] + 5);
                     return { ...s, popularityTracker: newTracker };
                 });
-                set({ 
-                    seats: newSeats,
-                    playerState: { ...state.playerState, funds: Math.max(0, state.playerState.funds - 1000000) } 
-                });
+                set({ seats: newSeats });
             }
         },
         {
@@ -356,6 +341,7 @@ export const gameEvents: GameEvent[] = [
     choices: [
         {
             text: 'We will find the budget. Sabah and Sarawak are not just states; they are equal partners! (Costs 5M)',
+            costFunds: 5000000,
             effect: (state, set) => {
                 const myCoal = state.playerState.currentCoalition;
                 const newSeats = state.seats.map(s => {
@@ -363,10 +349,7 @@ export const gameEvents: GameEvent[] = [
                     if (s.isBorneo) newTracker[myCoal] = Math.min(100, newTracker[myCoal] + 8);
                     return { ...s, popularityTracker: newTracker };
                 });
-                set({ 
-                    seats: newSeats,
-                    playerState: { ...state.playerState, funds: Math.max(0, state.playerState.funds - 5000000) } 
-                });
+                set({ seats: newSeats });
             }
         },
         {
@@ -396,6 +379,7 @@ export const gameEvents: GameEvent[] = [
       choices: [
         {
             text: 'Politics stops at the water’s edge. Every sen we have will go to helping those in need! (Costs 3M)',
+            costFunds: 3000000,
             effect: (state, set) => {
                 const myCoal = state.playerState.currentCoalition;
                 const newSeats = state.seats.map(s => {
@@ -403,10 +387,7 @@ export const gameEvents: GameEvent[] = [
                     if (s.isRural) newTracker[myCoal] = Math.min(100, newTracker[myCoal] + 6);
                     return { ...s, popularityTracker: newTracker };
                 });
-                set({ 
-                    seats: newSeats,
-                    playerState: { ...state.playerState, funds: Math.max(0, state.playerState.funds - 3000000) } 
-                });
+                set({ seats: newSeats });
             }
         },
         {
@@ -477,14 +458,10 @@ export const gameEvents: GameEvent[] = [
       choices: [
           {
               text: 'Aggressive Takedown Request (-1M Funds, -15 PC)',
-              effect: (state, set) => {
-                  set({ 
-                      playerState: { 
-                          ...state.playerState, 
-                          funds: Math.max(0, state.playerState.funds - 1000000),
-                          politicalCapital: Math.max(0, state.playerState.politicalCapital - 15)
-                      } 
-                  });
+              costFunds: 1000000,
+              costPC: 15,
+              effect: (_state, _set) => {
+                  // Costs deducted in store
               }
           },
         {

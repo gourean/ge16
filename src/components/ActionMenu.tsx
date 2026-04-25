@@ -11,7 +11,7 @@ import {
   Target
 } from 'lucide-react';
 import { getSeatsInSameState, getThematicManifestoEffect } from '../utils/campaignUtils';
-import { playClick } from '../utils/sfx';
+import { playClick, playDayEnd } from '../utils/sfx';
 
 type ActionType = 'CERAMAH' | 'SMEAR' | 'SOCIAL_MEDIA' | 'GROUND_WAR' | 'CYBER_ATTACK' | 'MANIFESTO_THEMATIC';
 
@@ -317,7 +317,7 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
             setTimeout(() => {
               nextTurn();
             }, 1600);
-            playClick();
+            playDayEnd();
           }}
           style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}
         >

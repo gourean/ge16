@@ -81,3 +81,30 @@ export const playPopup = () => {
   osc1.stop(ctx.currentTime + 0.5);
   osc2.stop(ctx.currentTime + 0.8);
 };
+
+/**
+ * Triumphant chime for finishing a day.
+ */
+export const playDayEnd = () => {
+  const { audioSettings } = useGameStore.getState();
+  if (audioSettings.isMuted || audioSettings.sfxVolume <= 0) return;
+
+  const ctx = getCtx();
+  const volume = audioSettings.sfxVolume / 100;
+
+  const osc1 = ctx.createOscillator();
+  const gain1 = ctx.createGain();
+  osc1.type = 'triangle';
+  osc1.frequency.setValueAtTime(300, ctx.currentTime);
+  osc1.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.2);
+  osc1.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.4);
+  
+  gain1.gain.setValueAtTime(0, ctx.currentTime);
+  gain1.gain.linearRampToValueAtTime(volume * 0.4, ctx.currentTime + 0.1);
+  gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+
+  osc1.connect(gain1);
+  gain1.connect(ctx.destination);
+  osc1.start();
+  osc1.stop(ctx.currentTime + 0.6);
+};

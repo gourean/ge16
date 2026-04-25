@@ -85,6 +85,7 @@ export default function PostElection() {
   useEffect(() => {
     // Initial banner item only at mount
     setActiveTickerItems([{ id: -1, text: "GE16 ELECTION NIGHT COVERAGE — LIVE RESULTS INCOMING..." }]);
+    lastSpawnRef.current = Date.now();
 
     const spawnTimer = setInterval(() => {
       const now = Date.now();

@@ -37,7 +37,7 @@ export interface HistoricalCoalition {
 }
 
 export const historicalCoalitions: HistoricalCoalition[] = [
-  { id: 'PH', name: 'Pakatan Harapan', parties: ['PKR', 'DAP', 'AMANAH', 'MUDA', 'WARISAN'], color: '#ed1c24' },
+  { id: 'PH', name: 'Pakatan Harapan', parties: ['PKR', 'DAP', 'AMANAH', 'MUDA'], color: '#ed1c24' },
   { id: 'PN', name: 'Perikatan Nasional', parties: ['PAS', 'BERSATU', 'GERAKAN'], color: '#003153' },
   { id: 'BN', name: 'Barisan Nasional', parties: ['UMNO', 'MCA', 'MIC', 'GPS', 'GRS'], color: '#0033a0' },
 ];

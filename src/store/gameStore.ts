@@ -398,6 +398,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       const choice = currentEvent.choices[choiceIndex];
       if (choice) {
+          const costF = choice.costFunds || 0;
+          const costPC = choice.costPC || 0;
+
           const wrappedSet = (update: Partial<GameState> | ((state: GameState) => Partial<GameState>)) => {
               const actualUpdate = typeof update === 'function' ? update(get()) : update;
               if (actualUpdate.seats) {
@@ -408,6 +411,18 @@ export const useGameStore = create<GameState>((set, get) => ({
               }
               set(actualUpdate);
           };
+
+          // Deduct costs if any
+          if (costF > 0 || costPC > 0) {
+              set((s) => ({
+                  playerState: {
+                      ...s.playerState,
+                      funds: s.playerState.funds - costF,
+                      politicalCapital: s.playerState.politicalCapital - costPC
+                  }
+              }));
+          }
+
           choice.effect(state, wrappedSet as any);
       }
       

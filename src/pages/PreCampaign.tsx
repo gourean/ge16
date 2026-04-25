@@ -71,7 +71,7 @@ export default function PreCampaign() {
     const unselectedParties = availableParties.filter(p => !finalParties.find(fp => fp.id === p.id));
 
     // Refactor the seats to Faction1, 2, 3 based on initial_state.json numbers
-    const modifiedSeats = applyFactionsToSeats(seats, finalParties, unselectedParties, finalOpponentMode, explicitSwings);
+    const modifiedSeats = applyFactionsToSeats(seats, finalParties, unselectedParties, finalOpponentMode, explicitSwings, gameMode === 'HISTORICAL');
     
     // Load the newly built seats into the store
     loadInitialSeats(modifiedSeats);

@@ -157,8 +157,8 @@ export interface DemographicSwing {
  * Calculates a synergy multiplier for a given combination of parties.
  * Ranges roughly from 0.7 (severe clash) to 1.3 (great coverage).
  */
-export function calculateSynergy(parties: Party[]): number {
-  if (parties.length <= 1) return 1.0;
+export function calculateSynergy(parties: Party[], isHistorical?: boolean): number {
+  if (isHistorical || parties.length <= 1) return 1.0;
 
   let multiplier = 1.0;
   const ideologies = parties.map(p => p.ideology);
@@ -266,7 +266,8 @@ export function applyFactionsToSeats(
   playerParties: Party[],
   unselectedParties: Party[],
   opponentType: '1v1' | '3-corner',
-  explicitSwings: DemographicSwing[] = []
+  explicitSwings: DemographicSwing[] = [],
+  isHistorical?: boolean
 ): any[] {
 
   const oppFactions = distributeOpponents(unselectedParties, opponentType);
@@ -274,9 +275,9 @@ export function applyFactionsToSeats(
   const faction2 = oppFactions.faction2;
   const faction3 = oppFactions.faction3;
   
-  const syn1 = calculateSynergy(faction1);
-  const syn2 = calculateSynergy(faction2);
-  const syn3 = calculateSynergy(faction3);
+  const syn1 = calculateSynergy(faction1, isHistorical);
+  const syn2 = calculateSynergy(faction2, isHistorical);
+  const syn3 = calculateSynergy(faction3, isHistorical);
 
   // Get party ID sets for fast lookup
   const f1Ids = new Set(faction1.map(p => p.id));

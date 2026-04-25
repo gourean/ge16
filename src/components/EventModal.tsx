@@ -4,6 +4,7 @@ import { playClick } from '../utils/sfx';
 export default function EventModal() {
   const activeEvent = useGameStore(state => state.activeEvent);
   const resolveEvent = useGameStore(state => state.resolveEvent);
+  const playerState = useGameStore(state => state.playerState);
 
   if (!activeEvent) return null;
 
@@ -99,40 +100,64 @@ export default function EventModal() {
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-          {activeEvent.choices.map((choice, index) => (
-            <button
-              key={index}
-              className="glass-button action-btn-hover"
-              onClick={() => {
-                resolveEvent(index);
-                playClick();
-              }}
-              style={{ 
-                padding: '1.5rem 2rem', 
-                width: '100%', 
-                textAlign: 'left',
-                fontSize: '1.1rem',
-                border: '1px solid var(--border-glass)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1.2rem',
-                background: 'rgba(255, 255, 255, 0.03)'
-              }}
-            >
-              <div style={{ 
-                  color: getHeaderColor(), 
-                  fontWeight: 800,
-                  fontSize: '1.4rem',
-                  opacity: 0.6
-              }}>{'>'}</div>
-              <span style={{ 
-                flex: 1, 
-                lineHeight: '1.4', 
-                fontWeight: 500 
-              }}>{cleanText(choice.text)}</span>
-            </button>
-          ))}
+          {activeEvent.choices.map((choice, index) => {
+            const canAffordF = !choice.costFunds || playerState.funds >= choice.costFunds;
+            const canAffordPC = !choice.costPC || playerState.politicalCapital >= choice.costPC;
+            const canAfford = canAffordF && canAffordPC;
+
+            return (
+              <button
+                key={index}
+                className={`glass-button ${canAfford ? 'action-btn-hover' : ''}`}
+                disabled={!canAfford}
+                onClick={() => {
+                  resolveEvent(index);
+                  playClick();
+                }}
+                style={{ 
+                  padding: '1.5rem 2rem', 
+                  width: '100%', 
+                  textAlign: 'left',
+                  fontSize: '1.1rem',
+                  border: '1px solid var(--border-glass)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1.2rem',
+                  background: canAfford ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.01)',
+                  opacity: canAfford ? 1 : 0.4,
+                  cursor: canAfford ? 'pointer' : 'not-allowed',
+                  filter: canAfford ? 'none' : 'grayscale(0.8)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                <div style={{ 
+                    color: getHeaderColor(), 
+                    fontWeight: 800,
+                    fontSize: '1.4rem',
+                    opacity: canAfford ? 0.6 : 0.2
+                }}>{'>'}</div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ 
+                        lineHeight: '1.4', 
+                        fontWeight: 500 
+                    }}>{cleanText(choice.text)}</span>
+                    {!canAfford && (
+                        <span style={{ 
+                            fontSize: '0.75rem', 
+                            color: 'var(--accent-red)', 
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px'
+                        }}>
+                             Insufficient Resources
+                        </span>
+                    )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
