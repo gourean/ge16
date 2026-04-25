@@ -311,7 +311,7 @@ export default function Manifesto() {
 
       {/* Skip Confirmation Modal */}
       {isSkipConfirmOpen && (
-        <div style={{
+        <div className="skip-modal-overlay" style={{
           position: 'fixed',
           top: 0,
           left: 0,
@@ -322,17 +322,21 @@ export default function Manifesto() {
           zIndex: 2000,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          padding: '1rem'
         }}>
-          <div className="glass-panel animate-fade-in" style={{
+          <div className="glass-panel animate-fade-in skip-modal-content" style={{
             maxWidth: '500px',
             width: '90%',
+            maxHeight: '85vh',
+            overflowY: 'auto',
             padding: '2.5rem',
             textAlign: 'center',
             border: '1px solid var(--border-glass)',
-            boxShadow: '0 0 50px rgba(0,0,0,0.5)'
+            boxShadow: '0 0 50px rgba(0,0,0,0.5)',
+            position: 'relative'
           }}>
-            <div style={{
+            <div className="skip-icon-wrapper" style={{
               margin: '0 auto 1.5rem',
               width: '60px',
               height: '60px',
@@ -345,24 +349,24 @@ export default function Manifesto() {
               <AlertCircle size={32} color="#ffc107" />
             </div>
 
-            <h2 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.4rem', fontWeight: 'bold' }}>
+            <h2 className="skip-title" style={{ color: 'white', marginBottom: '1rem', fontSize: '1.4rem', fontWeight: 'bold' }}>
               Skip Manifesto?
             </h2>
 
-            <p style={{ marginBottom: '2.5rem', lineHeight: '1.6', color: 'var(--text-muted)', fontSize: '1rem' }}>
+            <p className="skip-message" style={{ marginBottom: '2.5rem', lineHeight: '1.6', color: 'var(--text-muted)', fontSize: '1rem' }}>
               A manifesto isn't a bible, but are you sure you want to campaign without one?
             </p>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="skip-actions" style={{ display: 'flex', gap: '1rem' }}>
               <button
-                className="glass-button"
+                className="glass-button back-btn"
                 onClick={() => { playClick(); setIsSkipConfirmOpen(false); }}
                 style={{ flex: 1, padding: '1rem' }}
               >
                 Back
               </button>
               <button
-                className="glass-button"
+                className="glass-button skip-final-btn"
                 onClick={executeSkipManifesto}
                 style={{
                   flex: 1.5,
@@ -377,6 +381,35 @@ export default function Manifesto() {
               </button>
             </div>
           </div>
+          <style>{`
+            @media (max-width: 768px) {
+              .skip-modal-overlay {
+                padding: 0.5rem !important;
+                padding-top: env(safe-area-inset-top, 0px) !important;
+                padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+              }
+              .skip-modal-content {
+                padding: 1.5rem !important;
+                max-height: 80vh !important;
+              }
+              .skip-icon-wrapper {
+                width: 48px !important;
+                height: 48px !important;
+                margin-bottom: 1rem !important;
+              }
+              .skip-title {
+                font-size: 1.2rem !important;
+              }
+              .skip-message {
+                font-size: 0.9rem !important;
+                margin-bottom: 1.5rem !important;
+              }
+              .back-btn, .skip-final-btn {
+                padding: 0.7rem !important;
+                font-size: 0.9rem !important;
+              }
+            }
+          `}</style>
         </div>
       )}
 

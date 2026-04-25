@@ -29,8 +29,8 @@ export default function EventModal() {
   };
 
   return (
-    <div style={{
-      position: 'absolute',
+    <div className="event-modal-overlay" style={{
+      position: 'fixed',
       top: 0,
       left: 0,
       width: '100vw',
@@ -41,11 +41,13 @@ export default function EventModal() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '2rem'
+      padding: '1rem'
     }}>
-      <div className="glass-panel animate-fade-in" style={{
+      <div className="glass-panel animate-fade-in event-modal-content" style={{
         maxWidth: '650px',
         width: '100%',
+        maxHeight: '90vh',
+        overflowY: 'auto',
         padding: '3rem',
         textAlign: 'left',
         border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -63,7 +65,7 @@ export default function EventModal() {
             borderRadius: '16px 16px 0 0'
         }} />
 
-        <div style={{ 
+        <div className="event-type" style={{ 
           fontSize: '0.9rem',
           color: getHeaderColor(),
           fontWeight: 800,
@@ -76,7 +78,7 @@ export default function EventModal() {
            activeEvent.type === 'EVENT' ? 'National News' : 'Press Inquiry'}
         </div>
         
-        <h2 style={{ 
+        <h2 className="event-title" style={{ 
             fontSize: '2rem', 
             marginBottom: '1.5rem',
             lineHeight: 1.2,
@@ -88,7 +90,7 @@ export default function EventModal() {
             {activeEvent.title}
         </h2>
         
-        <p style={{ 
+        <p className="event-description" style={{ 
           fontSize: '1.25rem', 
           marginBottom: '3rem', 
           lineHeight: '1.6', 
@@ -99,7 +101,7 @@ export default function EventModal() {
           {activeEvent.description}
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+        <div className="event-choices" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           {activeEvent.choices.map((choice, index) => {
             const canAffordF = !choice.costFunds || playerState.funds >= choice.costFunds;
             const canAffordPC = !choice.costPC || playerState.politicalCapital >= choice.costPC;
@@ -108,7 +110,7 @@ export default function EventModal() {
             return (
               <button
                 key={index}
-                className={`glass-button ${canAfford ? 'action-btn-hover' : ''}`}
+                className={`glass-button event-choice-btn ${canAfford ? 'action-btn-hover' : ''}`}
                 disabled={!canAfford}
                 onClick={() => {
                   resolveEvent(index);
@@ -160,6 +162,46 @@ export default function EventModal() {
           })}
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .event-modal-overlay {
+             padding: 0.5rem !important;
+             padding-top: env(safe-area-inset-top, 0px) !important;
+             padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+          }
+          .event-modal-content {
+            padding: 1.5rem !important;
+            max-height: 85vh !important;
+          }
+          .event-type {
+            font-size: 0.7rem !important;
+            letter-spacing: 2px !important;
+            margin-bottom: 0.8rem !important;
+          }
+          .event-title {
+            font-size: 1.4rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .event-description {
+            font-size: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            line-height: 1.4 !important;
+          }
+          .event-choices {
+            gap: 0.8rem !important;
+          }
+          .event-choice-btn {
+            padding: 1rem !important;
+            font-size: 0.95rem !important;
+            gap: 0.8rem !important;
+          }
+          .event-choice-btn > div:first-child {
+            font-size: 1.1rem !important;
+          }
+        }
+      `}</style>
     </div>
+
   );
 }

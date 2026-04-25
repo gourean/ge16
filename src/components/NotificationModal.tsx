@@ -38,22 +38,25 @@ export default function NotificationModal() {
   };
 
   return (
-    <div style={{
+    <div className="notification-overlay" style={{
       position: 'fixed',
       top: 0,
       left: 0,
       width: '100vw',
       height: '100vh',
-      backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      backgroundColor: 'rgba(0, 0, 0, 0.4)',
       zIndex: 2000,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      padding: '1rem',
       pointerEvents: 'all'
     }}>
-      <div className="glass-panel animate-fade-in" style={{
+      <div className="glass-panel animate-fade-in notification-content" style={{
         maxWidth: '450px',
         width: '90%',
+        maxHeight: '85vh',
+        overflowY: 'auto',
         padding: '2rem',
         textAlign: 'center',
         border: `1px solid ${getAccentColor()}33`,
@@ -63,6 +66,7 @@ export default function NotificationModal() {
         
         <button 
           onClick={dismissNotification}
+          className="close-notif-btn"
           style={{
             position: 'absolute',
             top: '1rem',
@@ -77,7 +81,7 @@ export default function NotificationModal() {
           <X size={20} />
         </button>
 
-        <div style={{ 
+        <div className="notif-icon-wrapper" style={{ 
           margin: '0 auto 1.2rem', 
           width: '56px', 
           height: '56px', 
@@ -91,7 +95,7 @@ export default function NotificationModal() {
         </div>
 
         {current.title && (
-          <h2 style={{ 
+          <h2 className="notif-title" style={{ 
             color: 'white', 
             marginBottom: '0.5rem',
             fontSize: '1.4rem'
@@ -100,7 +104,7 @@ export default function NotificationModal() {
           </h2>
         )}
         
-        <p style={{ 
+        <p className="notif-message" style={{ 
           marginBottom: '1.5rem', 
           lineHeight: '1.5', 
           color: 'var(--text-primary)',
@@ -110,7 +114,7 @@ export default function NotificationModal() {
         </p>
 
         <button
-          className="glass-button"
+          className="glass-button dismiss-btn"
           onClick={dismissNotification}
           style={{ 
             minWidth: '120px',
@@ -122,6 +126,37 @@ export default function NotificationModal() {
           Dismiss
         </button>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .notification-overlay {
+            padding: 0.5rem !important;
+            padding-top: env(safe-area-inset-top, 0px) !important;
+            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+          }
+          .notification-content {
+            padding: 1.5rem !important;
+            max-height: 80vh !important;
+          }
+          .notif-icon-wrapper {
+            width: 44px !important;
+            height: 44px !important;
+            margin-bottom: 0.8rem !important;
+          }
+          .notif-title {
+            font-size: 1.1rem !important;
+          }
+          .notif-message {
+            font-size: 0.9rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .dismiss-btn {
+            padding: 0.6rem 1.5rem !important;
+            font-size: 0.85rem !important;
+          }
+        }
+      `}</style>
     </div>
+
   );
 }

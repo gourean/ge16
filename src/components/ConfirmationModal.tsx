@@ -19,7 +19,7 @@ export default function ConfirmationModal() {
   };
 
   return (
-    <div style={{
+    <div className="confirm-modal-overlay" style={{
       position: 'fixed',
       top: 0,
       left: 0,
@@ -27,20 +27,24 @@ export default function ConfirmationModal() {
       height: '100vh',
       backgroundColor: 'rgba(0, 0, 0, 0.8)',
       backdropFilter: 'blur(8px)',
-      zIndex: 1000,
+      zIndex: 2000,
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      padding: '1rem'
     }}>
-      <div className="glass-panel animate-fade-in" style={{
+      <div className="glass-panel animate-fade-in confirm-modal-content" style={{
         maxWidth: '400px',
         width: '90%',
+        maxHeight: '85vh',
+        overflowY: 'auto',
         padding: '2.5rem',
         textAlign: 'center',
         border: '1px solid rgba(255, 82, 82, 0.3)',
-        boxShadow: '0 0 40px rgba(255, 82, 82, 0.1)'
+        boxShadow: '0 0 40px rgba(255, 82, 82, 0.1)',
+        position: 'relative'
       }}>
-        <div style={{ 
+        <div className="confirm-icon-wrapper" style={{ 
           margin: '0 auto 1.5rem', 
           width: '60px', 
           height: '60px', 
@@ -53,7 +57,7 @@ export default function ConfirmationModal() {
           <AlertTriangle size={32} color="#ff5252" />
         </div>
 
-        <h2 style={{ 
+        <h2 className="confirm-title" style={{ 
           color: 'white', 
           marginBottom: '0.5rem',
           fontSize: '1.5rem'
@@ -61,7 +65,7 @@ export default function ConfirmationModal() {
           Exit Game?
         </h2>
         
-        <p style={{ 
+        <p className="confirm-message" style={{ 
           marginBottom: '2rem', 
           lineHeight: '1.5', 
           color: 'var(--text-muted)',
@@ -70,16 +74,16 @@ export default function ConfirmationModal() {
           You are about to leave the current simulation. All unsaved progress will be permanently lost.
         </p>
 
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div className="confirm-actions" style={{ display: 'flex', gap: '1rem' }}>
           <button
-            className="glass-button"
+            className="glass-button stay-btn"
             onClick={handleCancel}
             style={{ flex: 1, padding: '1rem' }}
           >
             Stay
           </button>
           <button
-            className="glass-button"
+            className="glass-button exit-btn"
             onClick={handleConfirm}
             style={{ 
               flex: 1, 
@@ -93,6 +97,37 @@ export default function ConfirmationModal() {
           </button>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .confirm-modal-overlay {
+            padding: 0.5rem !important;
+            padding-top: env(safe-area-inset-top, 0px) !important;
+            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+          }
+          .confirm-modal-content {
+            padding: 1.5rem !important;
+            max-height: 80vh !important;
+          }
+          .confirm-icon-wrapper {
+            width: 48px !important;
+            height: 48px !important;
+            margin-bottom: 1rem !important;
+          }
+          .confirm-title {
+            font-size: 1.2rem !important;
+          }
+          .confirm-message {
+            font-size: 0.85rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .stay-btn, .exit-btn {
+            padding: 0.7rem !important;
+            font-size: 0.9rem !important;
+          }
+        }
+      `}</style>
     </div>
+
   );
 }
