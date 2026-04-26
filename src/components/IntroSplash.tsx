@@ -105,7 +105,7 @@ export default function IntroSplash() {
             margin: '0 auto 2rem',
             lineHeight: '1.6'
           }}>
-            PMX Anwar Ibrahim has officially advised the King to dissolve the 16th Parliament. 
+            PMX Anwar Ibrahim has officially advised the King to dissolve the 15th Parliament. 
             The nation prepares for the General Election. How will you lead?
           </p>
           
