@@ -174,6 +174,25 @@ export interface DemographicSwing {
 }
 
 /**
+ * Simple seeded PRNG (mulberry32).
+ * Returns a function that produces deterministic floats in [0, 1).
+ */
+function mulberry32(seed: number) {
+  return () => {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Perturbation range constant (±percentage points).
+ * Each faction in each seat gets a random shift within this range.
+ */
+const PERTURBATION_RANGE = 3.0;
+
+/**
  * Calculates a synergy multiplier for a given combination of parties.
  * Ranges roughly from 0.7 (severe clash) to 1.3 (great coverage).
  */
@@ -287,7 +306,8 @@ export function applyFactionsToSeats(
   unselectedParties: Party[],
   opponentType: '1v1' | '3-corner',
   explicitSwings: DemographicSwing[] = [],
-  isHistorical?: boolean
+  isHistorical?: boolean,
+  perturbationSeed?: number
 ): any[] {
 
   const oppFactions = distributeOpponents(unselectedParties, opponentType);
@@ -303,6 +323,9 @@ export function applyFactionsToSeats(
   const f1Ids = new Set(faction1.map(p => p.id));
   const f2Ids = new Set(faction2.map(p => p.id));
   const f3Ids = new Set(faction3.map(p => p.id));
+
+  // Initialize seeded PRNG for perturbation
+  const rng = perturbationSeed != null ? mulberry32(perturbationSeed) : null;
 
   return seats.map(seat => {
     const pp = seat.partyPopularity;
@@ -334,39 +357,75 @@ export function applyFactionsToSeats(
       }
     }
 
-    // Apply demographic swings (shift percentage points between factions)
-    // Swings operate on the "from" and "to" legacy coalition keys (PH/PN/BN)
-    // We map them to factions by checking which faction contains parties from that coalition
-    for (const swing of explicitSwings) {
-      if (seat.demographics === swing.demographic) {
-        // Map legacy coalition names to faction IDs
-        const coalitionToFaction = (coalKey: string): 'F1' | 'F2' | 'F3' | null => {
-          const hc = historicalCoalitions.find(c => c.id === coalKey);
-          if (!hc) return null;
-          const parties = hc.parties;
-          for (const pid of parties) {
-            if (f1Ids.has(pid)) return 'F1';
-            if (f2Ids.has(pid)) return 'F2';
-            if (f3Ids.has(pid)) return 'F3';
-          }
-          return null;
-        };
-
-        const fromF = coalitionToFaction(swing.from);
-        const toF = coalitionToFaction(swing.to);
-
-        if (fromF && toF && fromF !== toF) {
-          const refs = { F1: raw1, F2: raw2, F3: raw3 };
-          const setters: Record<string, (v: number) => void> = {
-            F1: (v) => raw1 = v,
-            F2: (v) => raw2 = v,
-            F3: (v) => raw3 = v,
-          };
-          const actualAmount = Math.min(refs[fromF], swing.amount);
-          setters[fromF](refs[fromF] - actualAmount);
-          setters[toF](refs[toF] + actualAmount);
-        }
+    // Helper to map legacy coalition names to faction IDs
+    const coalitionToFaction = (coalKey: string): 'F1' | 'F2' | 'F3' | 'Others' | null => {
+      if (coalKey === 'Others') return 'Others';
+      const hc = historicalCoalitions.find(c => c.id === coalKey);
+      if (!hc) return null;
+      const parties = hc.parties;
+      for (const pid of parties) {
+        if (f1Ids.has(pid)) return 'F1';
+        if (f2Ids.has(pid)) return 'F2';
+        if (f3Ids.has(pid)) return 'F3';
       }
+      return null;
+    };
+
+    // Helper to get weighting for a swing based on seat demographics/ethnicity
+    const getSwingWeight = (seatObj: any, demographic: string): number => {
+      const weights: any = getSeatDemographicWeights(seatObj);
+      const eth = seatObj.ethnicity || {};
+      
+      switch (demographic) {
+        case 'Malay': return (eth.malay || 0) / 100;
+        case 'Chinese': return (eth.chinese || 0) / 100;
+        case 'Indian': return (eth.indian || 0) / 100;
+        case 'Bumi-Borneo': return ((eth.bumiSabah || 0) + (eth.bumiSarawak || 0)) / 100;
+        case 'Urban': return seatObj.isUrban ? 1.0 : 0;
+        case 'Rural': return seatObj.isRural ? 1.0 : 0;
+        case 'Youth': return weights.youth || 0;
+        case 'Nationwide': return 1.0;
+        // Legacy support for the old labels
+        case 'Malay-Majority': return seatObj.demographics === 'Malay-Majority' ? 1.0 : 0;
+        case 'Chinese-Majority': return seatObj.demographics === 'Chinese-Majority' ? 1.0 : 0;
+        case 'Mixed': return seatObj.demographics === 'Mixed' ? 1.0 : 0;
+        case 'Bumiputera-Sabah/Sarawak': return seatObj.demographics === 'Bumiputera-Sabah/Sarawak' ? 1.0 : 0;
+        default: return 0;
+      }
+    };
+
+    // Apply demographic swings (shift percentage points between factions)
+    for (const swing of explicitSwings) {
+      const weight = getSwingWeight(seat, swing.demographic);
+      if (weight <= 0) continue;
+
+      const fromF = coalitionToFaction(swing.from);
+      const toF = coalitionToFaction(swing.to);
+
+      if (fromF && toF && fromF !== toF) {
+        const refs: any = { F1: raw1, F2: raw2, F3: raw3, Others: rawOthers };
+        const amountToShift = swing.amount * weight;
+        const actualAmount = Math.min(refs[fromF], amountToShift);
+
+        const newVals = { ...refs };
+        newVals[fromF] -= actualAmount;
+        newVals[toF] += actualAmount;
+
+        raw1 = newVals.F1;
+        raw2 = newVals.F2;
+        raw3 = newVals.F3;
+        rawOthers = newVals.Others;
+      }
+    }
+
+    // Apply random perturbation (±PERTURBATION_RANGE% per faction)
+    if (rng) {
+      const p1 = (rng() * 2 - 1) * PERTURBATION_RANGE;
+      const p2 = (rng() * 2 - 1) * PERTURBATION_RANGE;
+      const p3 = (rng() * 2 - 1) * PERTURBATION_RANGE;
+      raw1 = Math.max(0, raw1 + p1);
+      raw2 = Math.max(0, raw2 + p2);
+      raw3 = Math.max(0, raw3 + p3);
     }
 
     // Apply synergy multipliers

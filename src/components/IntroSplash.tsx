@@ -136,7 +136,7 @@ export default function IntroSplash() {
             flexDirection: 'column',
             gap: '4px'
           }}>
-            <div>beta 0.2.3</div>
+            <div>beta 0.3.0</div>
             <div>
               GE15 result and demographic data sourced from <a href="https://github.com/Thevesh/analysis-election-msia" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255, 255, 255, 0.5)', textDecoration: 'none', borderBottom: '1px solid rgba(255, 255, 255, 0.2)' }}>Thevesh/analysis-election-msia</a>
             </div>

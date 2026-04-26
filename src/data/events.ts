@@ -24,7 +24,7 @@ export const gameEvents: GameEvent[] = [
     type: 'EVENT',
     choices: [
       {
-        text: 'This is a baseless political witch hunt! We deny all allegations of wrongdoing. (+ Risk, 0 Cost)',
+        text: 'This is a baseless political witch hunt! We deny all allegations of wrongdoing. (Protecting Coalition, -2 Pop)',
         effect: (state, set) => {
             // Lose 2 Popularity nationwide, 0 PC cost
             const penalty = 2;
@@ -39,16 +39,17 @@ export const gameEvents: GameEvent[] = [
             });
             
             set({
-                seats: newSeats,
-                playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 12) }
+                seats: newSeats
             });
         }
       },
       {
-         text: 'We have nothing to hide. I am calling for an immediate and independent inquiry. (Costs 20 PC)',
+         text: 'We have nothing to hide. I am calling for an immediate and independent inquiry. (-10 Stability, Costs 20 PC)',
          costPC: 20,
          effect: (state, set) => {
-             // Costs 20 PC, no popularity hit (Auto-deducted in store)
+             // Not protecting the alliance leads to internal instability
+             const updatedPlayerState = { ...state.playerState, stability: Math.max(0, state.playerState.stability - 10) };
+             
              // Fallback penalty if store somehow misses it (though UI should prevent)
              if (state.playerState.politicalCapital < 20) {
                  const penalty = 4;
@@ -59,7 +60,9 @@ export const gameEvents: GameEvent[] = [
                     newTracker[myCoal] = Math.max(0, newTracker[myCoal] - penalty);
                     return { ...s, popularityTracker: newTracker };
                 });
-                set({ seats: newSeats, playerState: {...state.playerState, politicalCapital: 0} });
+                set({ seats: newSeats, playerState: {...updatedPlayerState, politicalCapital: 0} });
+             } else {
+                set({ playerState: updatedPlayerState });
              }
          }
       }
@@ -453,11 +456,11 @@ export const gameEvents: GameEvent[] = [
   {
       id: 'bs_deepfake_viral',
       title: 'The Deepfake Scandal',
-      description: 'A highly convincing AI video showing you taking a bribe from a foreign tycoon goes viral 48 hours before the vote.',
+      description: 'A highly convincing AI video showing you taking a bribe from a foreign tycoon goes viral.',
       type: 'BLACK_SWAN',
       choices: [
           {
-              text: 'Aggressive Takedown Request (-1M Funds, -15 PC)',
+              text: 'Order an immediate legal takedown and sue the platforms for hosting the fake video. (-1M Funds, -15 PC)',
               costFunds: 1000000,
               costPC: 15,
               effect: (_state, _set) => {
@@ -465,7 +468,7 @@ export const gameEvents: GameEvent[] = [
               }
           },
         {
-            text: 'Emotional Public Appeal (-5 Popularity, +3 Stability)',
+            text: 'Record a live video message to voters debunking the deepfake as a malicious attack. (-5 Popularity, +3 Stability)',
             effect: (state, set) => {
                 const myCoal = state.playerState.currentCoalition;
                 const newSeats = state.seats.map(s => {

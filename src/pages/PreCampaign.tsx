@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { availableParties, historicalCoalitions } from '../data/parties';
 import type { Party } from '../data/parties';
 import { calculateSynergy, applyFactionsToSeats, distributeOpponents, type DemographicSwing } from '../utils/synergy';
-import { Shield, Target, Users, Play, Plus, Trash2 } from 'lucide-react';
+import { Shield, Target, Users, Play, Plus, Trash2, Shuffle } from 'lucide-react';
 import { playClick } from '../utils/sfx';
 
 export default function PreCampaign() {
@@ -15,6 +15,8 @@ export default function PreCampaign() {
   const [opponentMode, setOpponentMode] = useState<'1v1' | '3-corner'>('1v1');
   const [explicitSwings, setExplicitSwings] = useState<DemographicSwing[]>([]);
   const [selectedColor, setSelectedColor] = useState<string>(''); // For custom
+  const [perturbationSeed, setPerturbationSeed] = useState<number>(Math.floor(Math.random() * 999999));
+  const [perturbationEnabled, setPerturbationEnabled] = useState(true);
 
   // For Historical mode
   const [selectedHistorical, setSelectedHistorical] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export default function PreCampaign() {
     const unselectedParties = availableParties.filter(p => !finalParties.find(fp => fp.id === p.id));
 
     // Refactor the seats to Faction1, 2, 3 based on initial_state.json numbers
-    const modifiedSeats = applyFactionsToSeats(seats, finalParties, unselectedParties, finalOpponentMode, explicitSwings, gameMode === 'HISTORICAL');
+    const modifiedSeats = applyFactionsToSeats(seats, finalParties, unselectedParties, finalOpponentMode, explicitSwings, gameMode === 'HISTORICAL', perturbationEnabled ? perturbationSeed : undefined);
 
     // Load the newly built seats into the store
     loadInitialSeats(modifiedSeats);
@@ -267,8 +269,8 @@ export default function PreCampaign() {
                   }}
                   style={{ width: '100%', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)', borderRadius: '8px', color: 'white' }}
                 >
-                  <option value="1v1" style={{ color: 'black' }}>Unified (1v1)</option>
-                  <option value="3-corner" style={{ color: 'black' }}>Fragmented (3-Corner)</option>
+                  <option value="1v1" style={{ color: 'black' }}>1v1 The Big Tent</option>
+                  <option value="3-corner" style={{ color: 'black' }}>3-Cornered Fight</option>
                 </select>
               </div>
             </div>
@@ -313,33 +315,81 @@ export default function PreCampaign() {
         <div className="swings-section" style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-glass)', marginBottom: '2rem' }}>
           <div className="flex-between swings-header" style={{ marginBottom: '1rem' }}>
             <h4>Post-GE15 Swings</h4>
-            <button onClick={() => { setExplicitSwings([...explicitSwings, { id: Date.now().toString(), demographic: 'Malay-Majority', from: 'BN', to: 'PN', amount: 5 }]); playClick(); }} className="glass-button" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button onClick={() => { setExplicitSwings([...explicitSwings, { id: Date.now().toString(), demographic: 'Nationwide', from: 'BN', to: 'PN', amount: 5 }]); playClick(); }} className="glass-button" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Plus size={16} /> <span className="desktop-only">Add Swing</span>
             </button>
+          </div>
+
+          {/* Political Climate Perturbation Indicator */}
+          <div className="perturbation-indicator" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.8rem 1rem', background: perturbationEnabled ? 'rgba(56, 189, 248, 0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${perturbationEnabled ? 'rgba(56, 189, 248, 0.2)' : 'var(--border-glass)'}`, borderRadius: '6px', marginBottom: '1rem', transition: 'all 0.3s' }}>
+            <label className="toggle-switch" style={{ position: 'relative', display: 'inline-block', width: '40px', minWidth: '40px', height: '22px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={perturbationEnabled} onChange={() => { setPerturbationEnabled(!perturbationEnabled); playClick(); }} style={{ opacity: 0, width: 0, height: 0 }} />
+              <span style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: perturbationEnabled ? '#38bdf8' : 'rgba(255,255,255,0.15)', borderRadius: '11px', transition: 'background-color 0.3s' }}>
+                <span style={{ position: 'absolute', left: perturbationEnabled ? '20px' : '2px', top: '2px', width: '18px', height: '18px', backgroundColor: 'white', borderRadius: '50%', transition: 'left 0.3s' }} />
+              </span>
+            </label>
+            <div style={{ flex: 1, opacity: perturbationEnabled ? 1 : 0.5, transition: 'opacity 0.3s' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Political Climate</div>
+              <div style={{ fontSize: '0.95rem', color: perturbationEnabled ? '#38bdf8' : 'var(--text-muted)' }}>
+                {perturbationEnabled ? (<>Seed <strong>#{perturbationSeed}</strong> — ±3% random variance per seat</>) : 'Disabled — using exact GE15 data'}
+              </div>
+            </div>
+            {perturbationEnabled && (
+              <button
+                onClick={() => { setPerturbationSeed(Math.floor(Math.random() * 999999)); playClick(); }}
+                className="glass-button"
+                style={{ padding: '0.5rem 0.8rem', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
+                title="Re-roll political climate"
+              >
+                <Shuffle size={14} /> Re-roll
+              </button>
+            )}
           </div>
           {explicitSwings.length > 0 && (
             <div className="swings-list">
               {explicitSwings.map((swing, idx) => (
                 <div key={swing.id} className="swing-row" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                  <select value={swing.demographic} onChange={e => { const newS = [...explicitSwings]; newS[idx].demographic = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px', flex: 1 }}>
-                    <option value="Malay-Majority">Malay</option>
-                    <option value="Chinese-Majority">Chinese</option>
-                    <option value="Mixed">Mixed</option>
-                    <option value="Bumiputera-Sabah/Sarawak">Bumi</option>
+                  <select value={swing.demographic} onChange={e => { const newS = [...explicitSwings]; newS[idx].demographic = e.target.value; setExplicitSwings(newS); }} className="swing-select" style={{ flex: 1 }}>
+                    <optgroup label="Ethnicity (Weighted)">
+                      <option value="Malay">Malay Voters</option>
+                      <option value="Chinese">Chinese Voters</option>
+                      <option value="Indian">Indian Voters</option>
+                      <option value="Bumi-Borneo">Bumi Voters (Borneo)</option>
+                    </optgroup>
+                    <optgroup label="Geography">
+                      <option value="Urban">Urban Seats</option>
+                      <option value="Rural">Rural Seats</option>
+                    </optgroup>
+                    <optgroup label="Specialty">
+                      <option value="Youth">Youth Voters</option>
+                      <option value="Nationwide">Nationwide Swing</option>
+                    </optgroup>
+                    <optgroup label="Legacy (Flat)">
+                      <option value="Malay-Majority">Malay-Majority Seats</option>
+                      <option value="Chinese-Majority">Chinese-Majority Seats</option>
+                      <option value="Mixed">Mixed Seats</option>
+                      <option value="Bumiputera-Sabah/Sarawak">Bumi-Majority (Borneo) Seats</option>
+                    </optgroup>
                   </select>
-                  <input type="number" value={swing.amount} onChange={e => { const newS = [...explicitSwings]; newS[idx].amount = Number(e.target.value); setExplicitSwings(newS); }} style={{ width: '50px', padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }} />
-                  <span style={{ color: 'var(--text-muted)' }}>%</span>
-                  <select value={swing.from} onChange={e => { const newS = [...explicitSwings]; newS[idx].from = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
-                    <option value="PH">PH</option>
-                    <option value="PN">PN</option>
-                    <option value="BN">BN</option>
-                  </select>
-                  <span style={{ color: 'var(--text-muted)' }}>→</span>
-                  <select value={swing.to} onChange={e => { const newS = [...explicitSwings]; newS[idx].to = e.target.value; setExplicitSwings(newS); }} style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.5)', color: 'white', border: '1px solid var(--border-glass)', borderRadius: '4px' }}>
-                    <option value="PH">PH</option>
-                    <option value="PN">PN</option>
-                    <option value="BN">BN</option>
-                  </select>
+                  <div className="swing-controls" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={swing.amount || ''} onChange={e => { const newS = [...explicitSwings]; const raw = e.target.value.replace(/[^0-9]/g, ''); newS[idx].amount = raw === '' ? 0 : parseInt(raw, 10); setExplicitSwings(newS); }} className="swing-select" style={{ width: '60px', textAlign: 'center' }} />
+                    <span style={{ color: 'var(--text-muted)' }}>%</span>
+                  </div>
+                  <div className="swing-shift" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <select value={swing.from} onChange={e => { const newS = [...explicitSwings]; newS[idx].from = e.target.value; setExplicitSwings(newS); }} className="swing-select">
+                      <option value="PH">PH</option>
+                      <option value="PN">PN</option>
+                      <option value="BN">BN</option>
+                      <option value="Others">Others</option>
+                    </select>
+                    <span style={{ color: 'var(--text-muted)' }}>→</span>
+                    <select value={swing.to} onChange={e => { const newS = [...explicitSwings]; newS[idx].to = e.target.value; setExplicitSwings(newS); }} className="swing-select">
+                      <option value="PH">PH</option>
+                      <option value="PN">PN</option>
+                      <option value="BN">BN</option>
+                      <option value="Others">Others</option>
+                    </select>
+                  </div>
                   <button onClick={() => {
                     setExplicitSwings(explicitSwings.filter(s => s.id !== swing.id))
                     playClick();
@@ -416,13 +466,48 @@ export default function PreCampaign() {
             padding: 1rem !important;
           }
           .swing-row {
-            gap: 0.5rem !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0.8rem !important;
+            padding: 1rem !important;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+          }
+          .swing-select {
+            width: 100% !important;
+          }
+          .swing-controls, .swing-shift {
+            justify-content: space-between !important;
           }
           .start-btn {
             width: 100% !important;
             padding: 1rem !important;
             font-size: 1.1rem !important;
           }
+        }
+
+        .swing-select {
+          padding: 0.6rem;
+          background: rgba(0, 0, 0, 0.6);
+          color: white;
+          border: 1px solid var(--border-glass);
+          border-radius: 6px;
+          font-size: 16px; /* Prevents iOS auto-zoom on focus */
+          transition: border-color 0.2s;
+        }
+        .swing-select:focus {
+          border-color: var(--accent-blue);
+          outline: none;
+        }
+        .swing-select optgroup {
+          color: #38bdf8; /* Brighter blue for high contrast */
+          background: #111;
+          font-weight: bold;
+          font-style: normal;
+        }
+        .swing-select option {
+          background: #1a1a1a;
+          color: white;
         }
       `}</style>
     </div>

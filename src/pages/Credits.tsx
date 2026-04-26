@@ -69,10 +69,9 @@ export default function Credits() {
 
           <section className="credit-section">
             <h3 className="section-header">Musical Score</h3>
-            <ul className="music-list">
-              <li>Dvořák — Symphony No. 9, 4th Mvt</li>
-              <li>Beethoven — Ode to Joy</li>
-            </ul>
+            <p className="credit-detail">
+              Suno AI Music Generator
+            </p>
           </section>
 
           <section className="credit-section methodology">
