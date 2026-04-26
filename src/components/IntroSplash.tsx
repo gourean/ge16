@@ -83,12 +83,12 @@ export default function IntroSplash() {
             Special Announcement
           </div>
 
-          <h1 style={{ 
-            fontSize: '3.5rem', 
+          <h1 style={{
+            fontSize: '3.5rem',
             lineHeight: '1.1',
-            marginBottom: '2rem', 
-            background: 'linear-gradient(135deg, #ffffff 0%, #a0a6b8 100%)', 
-            WebkitBackgroundClip: 'text', 
+            marginBottom: '2rem',
+            background: 'linear-gradient(135deg, #ffffff 0%, #a0a6b8 100%)',
+            WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             fontWeight: '900',
             letterSpacing: '-1px',
@@ -97,23 +97,23 @@ export default function IntroSplash() {
             Parliament Dissolved
           </h1>
 
-          <p style={{ 
-            fontSize: '1.1rem', 
-            color: 'rgba(255, 255, 255, 0.6)', 
+          <p style={{
+            fontSize: '1.1rem',
+            color: 'rgba(255, 255, 255, 0.6)',
             marginBottom: '2rem',
             maxWidth: '500px',
             margin: '0 auto 2rem',
             lineHeight: '1.6'
           }}>
-            PMX Anwar Ibrahim has officially advised the King to dissolve the 16th Parliament. 
+            PMX Anwar Ibrahim has officially advised the King to dissolve the 15th Parliament.
             The nation prepares for the General Election. How will you lead?
           </p>
-          
-          <button 
+
+          <button
             onClick={handleStart}
             className="glass-button active pulse-glow"
-            style={{ 
-              fontSize: '1.2rem', 
+            style={{
+              fontSize: '1.2rem',
               padding: '1.2rem 4rem',
               display: 'flex',
               alignItems: 'center',
@@ -125,12 +125,12 @@ export default function IntroSplash() {
           >
             <Play size={20} fill="currentColor" /> ENTER THE ARENA
           </button>
-          
-          <div style={{ 
-            marginTop: '2.5rem', 
+
+          <div style={{
+            marginTop: '2.5rem',
             paddingTop: '1.5rem',
             borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-            fontSize: '0.75rem', 
+            fontSize: '0.75rem',
             color: 'rgba(255, 255, 255, 0.3)',
             display: 'flex',
             flexDirection: 'column',
