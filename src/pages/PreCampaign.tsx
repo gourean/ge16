@@ -131,15 +131,26 @@ export default function PreCampaign() {
       // Custom mode
       const leadColor = selectedColor || (finalParties.length > 0 ? finalParties[0].color : '#ef4444');
 
-      // Opponents in custom mode
+      // Opponents in custom mode: Avoid picking black/very dark themes for better visibility
       let f2Color = '#0ea5e9';
       let f3Color = '#2563eb';
 
+      const isTooDark = (c: string) => {
+        const darkColors = ['#181116', '#000000', '#111111', '#1a1a1a'];
+        return darkColors.includes(c.toLowerCase());
+      };
+
       if (oppFactions.faction2.length > 0) {
-        f2Color = oppFactions.faction2[Math.floor(Math.random() * oppFactions.faction2.length)].color;
+        const validColors = oppFactions.faction2.map(p => p.color).filter(c => !isTooDark(c));
+        f2Color = validColors.length > 0 
+          ? validColors[Math.floor(Math.random() * validColors.length)]
+          : '#0ea5e9'; // Fallback to sky blue
       }
       if (oppFactions.faction3.length > 0) {
-        f3Color = oppFactions.faction3[Math.floor(Math.random() * oppFactions.faction3.length)].color;
+        const validColors = oppFactions.faction3.map(p => p.color).filter(c => !isTooDark(c));
+        f3Color = validColors.length > 0 
+          ? validColors[Math.floor(Math.random() * validColors.length)]
+          : '#2563eb'; // Fallback to royal blue
       }
 
       selectCoalition(customName, finalParties.map(p => p.id), {
