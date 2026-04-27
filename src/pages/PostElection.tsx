@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useGameStore, type Seat } from '../store/gameStore';
+import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
 import { Newspaper, FastForward, Play, Pause, Zap } from 'lucide-react';
 
