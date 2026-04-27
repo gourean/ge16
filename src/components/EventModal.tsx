@@ -160,6 +160,37 @@ export default function EventModal() {
               </button>
             );
           })}
+
+          {activeEvent.choices.every(choice => {
+            const canAffordF = !choice.costFunds || playerState.funds >= choice.costFunds;
+            const canAffordPC = !choice.costPC || playerState.politicalCapital >= choice.costPC;
+            return !canAffordF || !canAffordPC;
+          }) && (
+            <button
+              className="glass-button action-btn-hover"
+              onClick={() => {
+                resolveEvent(-1);
+                playClick();
+              }}
+              style={{
+                marginTop: '1rem',
+                padding: '1.5rem 2rem',
+                width: '100%',
+                border: '1px solid var(--accent-red)',
+                borderRadius: '12px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: 'var(--accent-red)',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '1rem'
+              }}
+            >
+              <span>⚠</span>
+              <span>Unable to Respond (Suffer Heavy Consequences)</span>
+            </button>
+          )}
         </div>
       </div>
 

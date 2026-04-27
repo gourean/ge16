@@ -307,21 +307,31 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
         <button 
           className="glass-button active pulse-glow end-day-btn" 
           onClick={() => {
-            pushNotification({
-              title: "Day Complete",
-              message: `Day ${turn} strategy finalized. Actions replenished.`,
-              type: "info",
-              duration: 1500
-            });
+            if (turn < 14) {
+              pushNotification({
+                title: "Day Complete",
+                message: `Day ${turn} strategy finalized. Actions replenished.`,
+                type: "info",
+                duration: 1500
+              });
+            } else {
+              pushNotification({
+                title: "Campaign Concluded",
+                message: "Final strategies deployed. Proceeding to Election Night...",
+                type: "success",
+                duration: 2000
+              });
+            }
+            
             // Delay nextTurn so that it doesn't overlap at all with the summary
             setTimeout(() => {
               nextTurn();
-            }, 1600);
+            }, turn < 14 ? 1600 : 2100);
             playDayEnd();
           }}
           style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}
         >
-          End Day
+          {turn < 14 ? 'End Day' : 'Election Night'}
         </button>
       </div>
 

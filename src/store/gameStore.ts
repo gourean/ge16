@@ -396,6 +396,32 @@ export const useGameStore = create<GameState>((set, get) => ({
       
       if (!currentEvent) return;
 
+      if (choiceIndex === -1) {
+          // Default penalty for inaction (softlock prevention)
+          const penaltyPop = 3;
+          const penaltyStability = 10;
+          const myCoal = state.playerState.currentCoalition;
+          
+          const newSeats = state.seats.map(s => ({
+              ...s,
+              popularityTracker: normalizePopularity({
+                  ...s.popularityTracker,
+                  [myCoal]: Math.max(0, (s.popularityTracker as any)[myCoal] - penaltyPop)
+              } as any) as any
+          })) as Seat[];
+
+          set({
+              seats: newSeats,
+              playerState: {
+                  ...state.playerState,
+                  stability: Math.max(0, state.playerState.stability - penaltyStability)
+              },
+              activeEvent: null,
+              triggeredEventIds: [...state.triggeredEventIds, currentEvent.id]
+          });
+          return;
+      }
+
       const choice = currentEvent.choices[choiceIndex];
       if (choice) {
           const costF = choice.costFunds || 0;

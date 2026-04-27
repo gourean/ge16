@@ -34,7 +34,7 @@ export default function NationalDashboard() {
       }
     }
     if (firstPop - secondPop <= 5) {
-      leader = 'Undecided';
+      leader = 'Undecided'; // Internally still 'Undecided' for count logic
     }
     seatCounts[leader as keyof typeof seatCounts]++;
   });
@@ -137,9 +137,14 @@ export default function NationalDashboard() {
       display: 'flex', justifyContent: 'space-between', alignItems: 'center'
     }}>
       <div className="flex-column status-report" style={{ minWidth: '140px', gap: '2px' }}>
-        <div className="status-label" style={{ fontSize: '0.6rem', color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: '800' }}>Status Report</div>
+        <div className="status-label" style={{ fontSize: '0.6rem', color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          Status Report
+          <div title="Election Day Variance: Final results may vary by ±5% due to turnout and silent voters." style={{ cursor: 'help' }}>
+            <Info size={10} />
+          </div>
+        </div>
         <h2 className="turn-label" style={{ fontSize: '1.2rem', fontWeight: '800', fontFamily: 'var(--font-heading)', lineHeight: '1' }}>Day {turn} of 14</h2>
-        <span className="phase-label" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Campaign Phase</span>
+        <div style={{ fontSize: '0.65rem', color: 'var(--accent-red)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Polling Error: ±5%</div>
       </div>
 
       <div className="flex-center factions-summary" style={{ gap: 'max(1.5rem, 3vw)', flex: 1, padding: '0 1rem' }}>
@@ -174,8 +179,8 @@ export default function NationalDashboard() {
               boxShadow: `0 0 8px ${factionColors.Undecided}44`,
               border: '1px solid rgba(255,255,255,0.2)'
             }} />
-            <span className="faction-name">Undecided</span>
-            <span className="faction-abbr" style={{ display: 'none' }}>{getAbbreviation('Undecided')}</span>
+            <span className="faction-name">Marginal</span>
+            <span className="faction-abbr" style={{ display: 'none' }}>?</span>
           </div>
         </div>
       </div>

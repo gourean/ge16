@@ -39,12 +39,12 @@ export const manifestoItems: ManifestoItem[] = [
     category: "Economy",
     responses: {
       agree: {
-        demographics: { b40: -10, urban: 10 },
+        demographics: { b40: -15, urban: 15 },
         resources: { momentum: 0 }, // Corporate Funds skip
         tags: ["Capitalist", "Unpopular"]
       },
       disagree: {
-        demographics: { b40: 10 },
+        demographics: { b40: 15, urban: -10, m40: -5 },
         resources: { momentum: 0 },
         tags: ["Populist"]
       },
@@ -61,12 +61,12 @@ export const manifestoItems: ManifestoItem[] = [
     category: "Economy",
     responses: {
       agree: {
-        demographics: { m40: 10, urban: 10, rural: -15 },
+        demographics: { m40: 10, urban: 5, rural: -15 },
         resources: {},
         tags: ["Pragmatist"]
       },
       disagree: {
-        demographics: { rural: 15, m40: -10, urban: -10 },
+        demographics: { rural: 15, m40: -10, urban: -5 },
         resources: {},
         tags: ["Populist"]
       },
@@ -83,12 +83,12 @@ export const manifestoItems: ManifestoItem[] = [
     category: "Economy",
     responses: {
       agree: {
-        demographics: { b40: 20, youth: 20 },
+        demographics: { b40: 20, youth: 15, urban: -20, m40: -15 },
         resources: {}, // Corporate Funds skip
         tags: ["Socialist", "Populist"]
       },
       disagree: {
-        demographics: { b40: -10, youth: -10 },
+        demographics: { urban: 20, m40: 15, b40: -20, youth: -15 },
         resources: {}, // Corporate Funds skip
         tags: ["Capitalist"]
       },
@@ -105,12 +105,12 @@ export const manifestoItems: ManifestoItem[] = [
     category: "Identity",
     responses: {
       agree: {
-        demographics: { nationalist: 20, rural: 20, urban: -25, minority: -25 },
+        demographics: { nationalist: 20, rural: 15, urban: -20, minority: -15 },
         resources: {},
         tags: ["Nationalist", "Polarizing"]
       },
       disagree: {
-        demographics: { urban: 15, minority: 15, nationalist: -15 },
+        demographics: { urban: 20, minority: 15, nationalist: -20, rural: -15 },
         resources: {},
         tags: ["Multicultural"]
       },
@@ -127,12 +127,12 @@ export const manifestoItems: ManifestoItem[] = [
     category: "Identity",
     responses: {
       agree: {
-        demographics: { conservative: 25, rural: 25, reformist: -20, urban: -20 },
+        demographics: { conservative: 25, rural: 15, reformist: -25, urban: -15 },
         resources: {},
         tags: ["Conservative", "Religious"]
       },
       disagree: {
-        demographics: { reformist: 20, urban: 20, conservative: -25, rural: -25 },
+        demographics: { reformist: 25, urban: 15, conservative: -25, rural: -15 },
         resources: {},
         tags: ["Secular"]
       },
@@ -149,12 +149,12 @@ export const manifestoItems: ManifestoItem[] = [
     category: "Identity",
     responses: {
       agree: {
-        demographics: { reformist: 25, minority: 25, nationalist: -30, heartland: -30 },
+        demographics: { reformist: 25, minority: 25, nationalist: -25, heartland: -25 },
         resources: {},
         tags: ["Reformist", "Polarizing"]
       },
       disagree: {
-        demographics: { nationalist: 15, heartland: 15, reformist: -15 },
+        demographics: { nationalist: 25, heartland: 25, reformist: -25, minority: -25 },
         resources: {},
         tags: ["Conservative"]
       },
@@ -166,19 +166,19 @@ export const manifestoItems: ManifestoItem[] = [
     }
   },
   {
-    id: "ag_prosecutor",
-    topic: "Separate the Attorney General & Public Prosecutor",
+    id: "sedition_act",
+    topic: "Abolish the Sedition Act & Fake News Laws",
     category: "Institutional",
     responses: {
       agree: {
-        demographics: { reformist: 15 },
-        resources: { pcCostMultiplier: 2 }, // Mechanic: "Black Hat" covert actions cost 2x PC
-        tags: ["Reformist", "Clean"]
+        demographics: { reformist: 20, youth: 15, conservative: -20, nationalist: -15 },
+        resources: {},
+        tags: ["Reformist", "Polarizing"]
       },
       disagree: {
-        demographics: { reformist: -15 },
-        resources: { pcCostMultiplier: 0.5 }, // Mechanic: "Black Hat" actions cost -50% PC
-        tags: ["Machiavellian"]
+        demographics: { conservative: 20, nationalist: 15, reformist: -20, youth: -15 },
+        resources: {},
+        tags: ["Conservative"]
       },
       neutral: {
         demographics: {},
@@ -193,12 +193,12 @@ export const manifestoItems: ManifestoItem[] = [
     category: "Institutional",
     responses: {
       agree: {
-        demographics: { borneo: 35, nationalist: -10 }, // Peninsular Centralist encoded as Nationalist
+        demographics: { borneo: 40, nationalist: -20, urban: -20 },
         resources: {},
         tags: ["Decentralist"]
       },
       disagree: {
-        demographics: { borneo: -40 },
+        demographics: { nationalist: 20, urban: 20, borneo: -40 },
         resources: {},
         tags: ["Centralist"]
       },
@@ -215,36 +215,36 @@ export const manifestoItems: ManifestoItem[] = [
     category: "Infrastructure",
     responses: {
       agree: {
-        demographics: { urban: 20 }, // Southern (Johor) included in Urban/State check
-        resources: {}, // Corporate Funds skip, Random Corruption Event handled in campaign
+        demographics: { urban: 25, m40: 10, rural: -20, heartland: -15 },
+        resources: {},
         tags: ["Capitalist", "Development"]
       },
       disagree: {
-        demographics: { rural: 10 }, // Southern (Johor) -15 handled in State check
+        demographics: { rural: 20, heartland: 15, urban: -25, m40: -10 },
         resources: {},
         tags: ["Austerity"]
       },
       neutral: {
         demographics: {},
-        resources: {}, // Corporate Funds skip
+        resources: {},
         tags: []
       }
     }
   },
   {
-    id: "gig_unions",
-    topic: "Mandate Unionization for Gig Economy Workers",
-    category: "Labor",
+    id: "ptptn_debt",
+    topic: "Abolish PTPTN Debt (Student Loans)",
+    category: "Economy",
     responses: {
       agree: {
-        demographics: { youth: 25, b40: 25 },
-        resources: {}, // Corporate Funds skip
-        tags: ["Labor", "Socialist"]
+        demographics: { youth: 30, b40: 10, urban: -20, m40: -20 },
+        resources: {},
+        tags: ["Populist", "Socialist"]
       },
       disagree: {
-        demographics: { youth: -20 },
-        resources: {}, // Corporate Funds skip
-        tags: ["Capitalist"]
+        demographics: { urban: 20, m40: 20, youth: -30, b40: -10 },
+        resources: {},
+        tags: ["Capitalist", "Pragmatist"]
       },
       neutral: {
         demographics: { youth: -5 },

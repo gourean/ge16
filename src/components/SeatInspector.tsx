@@ -15,7 +15,30 @@ export default function SeatInspector({ seatId, onClose }: { seatId: string | nu
       width: '320px', padding: '1.5rem', zIndex: 10 
     }}>
       <div className="flex-between inspector-header" style={{ marginBottom: '1rem' }}>
-        <h3 style={{ fontSize: '1.2rem' }}>{seat.name} <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>({seat.id})</span></h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{seat.name} <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>({seat.id})</span></h3>
+          {(() => {
+            const pops = Object.values(seat.popularityTracker).sort((a: any, b: any) => b - a);
+            if (pops[0] - pops[1] <= 5) {
+              return (
+                <span style={{ 
+                  fontSize: '0.6rem', 
+                  background: 'var(--accent-red)', 
+                  color: 'white', 
+                  padding: '2px 6px', 
+                  borderRadius: '4px', 
+                  fontWeight: '900',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  animation: 'pulse 2s infinite'
+                }}>
+                  Marginal
+                </span>
+              );
+            }
+            return null;
+          })()}
+        </div>
         <button onClick={() => {
           onClose();
           playClick();
@@ -56,8 +79,10 @@ export default function SeatInspector({ seatId, onClose }: { seatId: string | nu
           )}
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Popularity Tracker</div>
+          <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Popularity Tracker</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--accent-red)', fontWeight: 'bold' }}>±5% Variance</span>
+          </div>
           
           {['Faction1', 'Faction2', 'Faction3', 'Others'].filter(f => f !== 'Faction3' || factionParties.Faction3?.length > 0).map(coalition => {
             const pop = seat.popularityTracker[coalition as keyof typeof seat.popularityTracker];
@@ -75,7 +100,7 @@ export default function SeatInspector({ seatId, onClose }: { seatId: string | nu
                     {parties.join(' · ')}
                   </div>
                 )}
-                <div style={{ width: '100%', background: 'rgba(255,255,255,0.1)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ width: '100%', background: 'rgba(255,255,255,0.1)', height: '8px', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
                   <div style={{ 
                     width: `${pop}%`, 
                     height: '100%', 
@@ -99,7 +124,6 @@ export default function SeatInspector({ seatId, onClose }: { seatId: string | nu
               </div>
            </div>
         )}
-      </div>
 
       <style>{`
         @media (max-width: 1024px) {

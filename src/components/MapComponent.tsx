@@ -183,6 +183,7 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
         }
       }
 
+      // Seats within 5% margin are considered "Marginal" (Undecided on map)
       if (firstPop - secondPop <= 5) {
         leader = 'Undecided';
       }

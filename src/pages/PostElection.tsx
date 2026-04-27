@@ -131,12 +131,20 @@ export default function PostElection() {
     return { counts, votes, totalVotes };
   }, [displayedSeats]);
 
-  function getSeatResult(seat: any) {
+  function getSeatResult(seat: Seat) {
+    // Apply ±5% Election Day Variance (Voter Turnout / Silent Voters)
+    const perturbedTracker = { ...seat.popularityTracker };
+    for (const faction of Object.keys(perturbedTracker)) {
+      // ±5.0% absolute points (clamped to 0-100)
+      const variance = (Math.random() * 10) - 5; 
+      perturbedTracker[faction as keyof typeof perturbedTracker] = Math.max(0, Math.min(100, (seat.popularityTracker as any)[faction] + variance));
+    }
+
     let max = -1;
     let secondMax = -1;
     let winnerId = 'Others';
 
-    for (const [faction, pop] of Object.entries(seat.popularityTracker)) {
+    for (const [faction, pop] of Object.entries(perturbedTracker)) {
       if ((pop as number) > max) {
         secondMax = max;
         max = pop as number;
@@ -149,12 +157,13 @@ export default function PostElection() {
     const margin = max - secondMax;
     const isLandslide = max > 60 || margin > 20;
     const isMarginal = margin < 5;
+    
+    // Check unexpected against original un-perturbed winnerGE15
     const isUnexpected = winnerId !== seat.winnerGE15 && seat.winnerGE15 !== 'Others' && !!seat.winnerGE15;
 
     // Calculate absolute majority votes
-    // sum candidate votes to get total votes recorded in data
     const totalVotes = (seat.candidates || []).reduce((sum: number, c: any) => sum + (c.votes || 0), 0);
-    const majorityVotes = Math.round((margin / 100) * (totalVotes > 0 ? totalVotes : 50000)); // fallback to 50k if data missing
+    const majorityVotes = Math.round((margin / 100) * (totalVotes > 0 ? totalVotes : 50000)); 
 
     return { winner: winnerId, isLandslide, isMarginal, isUnexpected, max, margin, majorityVotes };
   }
