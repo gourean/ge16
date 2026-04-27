@@ -123,7 +123,7 @@ export default function Outcome() {
       <div className="animate-fade-in outcome-content-wrapper" style={{ maxWidth: '900px', width: '100%', position: 'relative' }}>
 
         <div className="newspaper-header" style={{ textAlign: 'center', marginBottom: '3rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1.5rem' }}>
-          <h1 className="newspaper-title" style={{ fontFamily: "'Playfair Display', serif", fontSize: '4rem', marginBottom: '0.5rem', letterSpacing: '-1.5px', textTransform: 'uppercase', color: 'white' }}>MALAYSIA GAZETTE</h1>
+          <h1 className="newspaper-title" style={{ fontFamily: "'Playfair Display', serif", fontSize: '4rem', marginBottom: '0.5rem', letterSpacing: '-1.5px', textTransform: 'uppercase', color: 'white' }}>THE CHRONICLE MALAYSIA</h1>
           <div className="flex-between newspaper-meta" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '4px', fontWeight: 'bold' }}>
             <span className="desktop-only">Digital Archives</span>
             <span>{new Date().toLocaleDateString('en-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
