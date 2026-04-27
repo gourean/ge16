@@ -111,6 +111,8 @@ export interface GameState {
   // Interaction (for Audio)
   hasInteractionStarted: boolean;
   setInteractionStarted: (started: boolean) => void;
+  setElectionResults: (results: Record<string, any>) => void;
+  electionResults: Record<string, any> | null;
 
   setFactionColor: (factionId: string, color: string) => void;
   startingFactionColors: Record<string, string>;
@@ -186,6 +188,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   audioSettings: loadSavedAudioSettings(),
   notificationQueue: [],
   hasInteractionStarted: false,
+  electionResults: null,
   
   setGamePhase: (phase) => set({ gamePhase: phase }),
   setExitConfirmationOpen: (open) => set({ exitConfirmationOpen: open }),
@@ -213,6 +216,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     activeEvent: null,
     hasTriggeredEventThisTurn: false,
     triggeredEventIds: [],
+    electionResults: null,
     exitConfirmationOpen: false,
     actionsRemaining: 3,
     factionColors: {
@@ -467,5 +471,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   resetFactionColors: () => set((state) => ({
     factionColors: { ...state.startingFactionColors }
-  }))
+  })),
+
+  setElectionResults: (results) => set({ electionResults: results })
 }));

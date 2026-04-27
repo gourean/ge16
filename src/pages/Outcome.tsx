@@ -4,11 +4,24 @@ import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
 
 export default function Outcome() {
-  const { seats, playerState, factionNames, factionColors, factionParties, resetGame } = useGameStore();
+  const { seats, playerState, factionNames, factionColors, factionParties, resetGame, electionResults } = useGameStore();
   const navigate = useNavigate();
 
   const results = useMemo(() => {
     const counts = { Faction1: 0, Faction2: 0, Faction3: 0, Others: 0 };
+    
+    // If we have stored results from PostElection (with variance), use them!
+    if (electionResults) {
+      seats.forEach(seat => {
+        const result = electionResults[seat.id];
+        if (result) {
+          counts[result.winner as keyof typeof counts]++;
+        }
+      });
+      return counts;
+    }
+
+    // Fallback: simple calculation without variance
     seats.forEach(seat => {
       let leader = 'Others';
       let max = -1;
@@ -21,7 +34,7 @@ export default function Outcome() {
       counts[leader as keyof typeof counts]++;
     });
     return counts;
-  }, [seats]);
+  }, [seats, electionResults]);
 
   const coalitions = [
     { id: 'Faction1', count: results.Faction1 },
@@ -136,9 +149,6 @@ export default function Outcome() {
               alt="Front Page Story"
               style={{ width: '100%', maxHeight: '450px', objectFit: 'cover', display: 'block' }}
             />
-            <div className="image-caption" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1.5rem', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', textAlign: 'center', fontStyle: 'italic', zIndex: 3 }}>
-              DATA RECONSTRUCTION: CERTIFIED ELECTION OUTCOME
-            </div>
           </div>
 
           <div className="flex-row report-body" style={{ gap: '2rem', alignItems: 'flex-start' }}>

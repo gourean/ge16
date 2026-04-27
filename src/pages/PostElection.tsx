@@ -4,7 +4,7 @@ import { playClick } from '../utils/sfx';
 import { Newspaper, FastForward, Play, Pause, Zap } from 'lucide-react';
 
 export default function PostElection() {
-  const { seats, playerState, factionNames, factionColors, factionParties, setGamePhase } = useGameStore();
+  const { seats, playerState, factionNames, factionColors, factionParties, setGamePhase, setElectionResults } = useGameStore();
   
   const [activeView, setActiveView] = useState<'tally' | 'feed'>('tally');
 
@@ -12,6 +12,48 @@ export default function PostElection() {
   const shuffledSeats = useMemo(() => {
     return [...seats].sort(() => Math.random() - 0.5);
   }, [seats]);
+
+  // 1. Pre-calculate stable results for ALL seats once
+  const stableResults = useMemo(() => {
+    const results: Record<string, any> = {};
+    shuffledSeats.forEach(seat => {
+      // Apply ±5% Election Day Variance (Voter Turnout / Silent Voters)
+      const perturbedTracker = { ...seat.popularityTracker };
+      for (const faction of Object.keys(perturbedTracker)) {
+        // ±5.0% absolute points (clamped to 0-100)
+        const variance = (Math.random() * 10) - 5; 
+        perturbedTracker[faction as keyof typeof perturbedTracker] = Math.max(0, Math.min(100, (seat.popularityTracker as any)[faction] + variance));
+      }
+
+      let max = -1;
+      let secondMax = -1;
+      let winnerId = 'Others';
+
+      for (const [faction, pop] of Object.entries(perturbedTracker)) {
+        if ((pop as number) > max) {
+          secondMax = max;
+          max = pop as number;
+          winnerId = faction;
+        } else if ((pop as number) > secondMax) {
+          secondMax = pop as number;
+        }
+      }
+
+      const margin = max - secondMax;
+      const isLandslide = max > 60 || margin > 20;
+      const isMarginal = margin < 5;
+      
+      // Check unexpected against original un-perturbed winnerGE15
+      const isUnexpected = winnerId !== seat.winnerGE15 && seat.winnerGE15 !== 'Others' && !!seat.winnerGE15;
+
+      // Calculate absolute majority votes
+      const totalVotes = (seat.candidates || []).reduce((sum: number, c: any) => sum + (c.votes || 0), 0);
+      const majorityVotes = Math.round((margin / 100) * (totalVotes > 0 ? totalVotes : 50000)); 
+
+      results[seat.id] = { winner: winnerId, isLandslide, isMarginal, isUnexpected, max, margin, majorityVotes };
+    });
+    return results;
+  }, [shuffledSeats]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [speed, setSpeed] = useState(1000); // Default Slow Speed
@@ -26,17 +68,18 @@ export default function PostElection() {
   const nextIdRef = useRef<number>(0);
   const lastSpawnRef = useRef<number>(0);
 
-
   const tickerRef = useRef<HTMLDivElement>(null);
 
-  const displayedSeats = shuffledSeats.slice(0, currentIndex);
+  const displayedSeats = useMemo(() => {
+    return shuffledSeats.slice(0, currentIndex);
+  }, [shuffledSeats, currentIndex]);
 
   // Simulation loop
   useEffect(() => {
     if (currentIndex < shuffledSeats.length && !isPaused) {
       const timer = setTimeout(() => {
         const nextSeat = shuffledSeats[currentIndex];
-        const result = getSeatResult(nextSeat);
+        const result = stableResults[nextSeat.id];
         
         const winnerName = factionNames[result.winner] || result.winner;
         let newHeadline = "";
@@ -119,7 +162,7 @@ export default function PostElection() {
     let totalVotes = 0;
 
     displayedSeats.forEach(seat => {
-      const result = getSeatResult(seat);
+      const result = stableResults[seat.id];
       counts[result.winner as keyof typeof counts]++;
       
       for (const [f, v] of Object.entries(seat.popularityTracker)) {
@@ -131,42 +174,6 @@ export default function PostElection() {
     return { counts, votes, totalVotes };
   }, [displayedSeats]);
 
-  function getSeatResult(seat: Seat) {
-    // Apply ±5% Election Day Variance (Voter Turnout / Silent Voters)
-    const perturbedTracker = { ...seat.popularityTracker };
-    for (const faction of Object.keys(perturbedTracker)) {
-      // ±5.0% absolute points (clamped to 0-100)
-      const variance = (Math.random() * 10) - 5; 
-      perturbedTracker[faction as keyof typeof perturbedTracker] = Math.max(0, Math.min(100, (seat.popularityTracker as any)[faction] + variance));
-    }
-
-    let max = -1;
-    let secondMax = -1;
-    let winnerId = 'Others';
-
-    for (const [faction, pop] of Object.entries(perturbedTracker)) {
-      if ((pop as number) > max) {
-        secondMax = max;
-        max = pop as number;
-        winnerId = faction;
-      } else if ((pop as number) > secondMax) {
-        secondMax = pop as number;
-      }
-    }
-
-    const margin = max - secondMax;
-    const isLandslide = max > 60 || margin > 20;
-    const isMarginal = margin < 5;
-    
-    // Check unexpected against original un-perturbed winnerGE15
-    const isUnexpected = winnerId !== seat.winnerGE15 && seat.winnerGE15 !== 'Others' && !!seat.winnerGE15;
-
-    // Calculate absolute majority votes
-    const totalVotes = (seat.candidates || []).reduce((sum: number, c: any) => sum + (c.votes || 0), 0);
-    const majorityVotes = Math.round((margin / 100) * (totalVotes > 0 ? totalVotes : 50000)); 
-
-    return { winner: winnerId, isLandslide, isMarginal, isUnexpected, max, margin, majorityVotes };
-  }
 
   const generateFinalAnnouncement = () => {
      // Identify overall winner
@@ -187,7 +194,7 @@ export default function PostElection() {
     // Determine winner for the skip announcement
     const finalCounts = { Faction1: 0, Faction2: 0, Faction3: 0, Others: 0 };
     shuffledSeats.forEach(s => {
-       const w = getSeatResult(s).winner;
+       const w = stableResults[s.id].winner;
        finalCounts[w as keyof typeof finalCounts]++;
     });
     const sorted = Object.entries(finalCounts).sort((a,b) => b[1] - a[1]);
@@ -285,6 +292,7 @@ export default function PostElection() {
               style={{ padding: '0.6rem 2rem', fontWeight: 'bold', fontSize: '0.9rem' }}
               onClick={() => {
                 playClick();
+                setElectionResults(stableResults);
                 setGamePhase('OUTCOME');
               }}
             >
