@@ -7,7 +7,7 @@ import { Shield, Target, Users, Play, Plus, Trash2, Shuffle } from 'lucide-react
 import { playClick } from '../utils/sfx';
 
 export default function PreCampaign() {
-  const { selectCoalition, setGamePhase, seats, loadInitialSeats, pushNotification } = useGameStore();
+  const { selectCoalition, setGamePhase, seats, loadInitialSeats, pushNotification, setCheatMode } = useGameStore();
 
   const [gameMode, setGameMode] = useState<'HISTORICAL' | 'CUSTOM'>('HISTORICAL');
   const [selectedParties, setSelectedParties] = useState<string[]>([]);
@@ -17,6 +17,7 @@ export default function PreCampaign() {
   const [selectedColor, setSelectedColor] = useState<string>(''); // For custom
   const [perturbationSeed, setPerturbationSeed] = useState<number>(Math.floor(Math.random() * 999999));
   const [perturbationEnabled, setPerturbationEnabled] = useState(true);
+  const [localCheatMode, setLocalCheatMode] = useState(false);
 
   // For Historical mode
   const [selectedHistorical, setSelectedHistorical] = useState<string | null>(null);
@@ -142,13 +143,13 @@ export default function PreCampaign() {
 
       if (oppFactions.faction2.length > 0) {
         const validColors = oppFactions.faction2.map(p => p.color).filter(c => !isTooDark(c));
-        f2Color = validColors.length > 0 
+        f2Color = validColors.length > 0
           ? validColors[Math.floor(Math.random() * validColors.length)]
           : '#0ea5e9'; // Fallback to sky blue
       }
       if (oppFactions.faction3.length > 0) {
         const validColors = oppFactions.faction3.map(p => p.color).filter(c => !isTooDark(c));
-        f3Color = validColors.length > 0 
+        f3Color = validColors.length > 0
           ? validColors[Math.floor(Math.random() * validColors.length)]
           : '#2563eb'; // Fallback to royal blue
       }
@@ -165,6 +166,7 @@ export default function PreCampaign() {
       });
     }
 
+    setCheatMode(localCheatMode);
     playClick();
     setGamePhase('MANIFESTO');
   };
@@ -411,6 +413,23 @@ export default function PreCampaign() {
               ))}
             </div>
           )}
+        </div>
+
+        <div className="flex-center cheat-mode-toggle" style={{ marginBottom: '2rem' }}>
+          <label className="cursor-pointer" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.6rem 1.2rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: localCheatMode ? '1px solid var(--accent-gold)' : '1px solid transparent', transition: 'all 0.2s', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={localCheatMode}
+              onChange={(e) => {
+                setLocalCheatMode(e.target.checked);
+                playClick();
+              }}
+              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-gold)', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '0.9rem', color: localCheatMode ? 'var(--accent-gold)' : 'var(--text-muted)', fontWeight: 'bold' }}>
+              Dictator Mode (unlimited resource)
+            </span>
+          </label>
         </div>
 
         <div className="flex-center start-action">

@@ -17,7 +17,7 @@ type ActionType = 'CERAMAH' | 'SMEAR' | 'SOCIAL_MEDIA' | 'GROUND_WAR' | 'CYBER_A
 
 export default function ActionMenu({ activeSeatId }: { activeSeatId: string | null }) {
   const [open, setOpen] = useState(false);
-  const { playAction, nextTurn, playerState, seats, actionsRemaining, pushNotification, turn } = useGameStore();
+  const { playAction, nextTurn, playerState, seats, actionsRemaining, pushNotification, turn, isCheatMode } = useGameStore();
 
   const activeSeat = activeSeatId ? seats.find(s => s.id === activeSeatId || s.id.replace('.', '') === activeSeatId) : null;
 
@@ -252,8 +252,8 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
         <div className="glass-panel resource-bar" style={{ padding: '0.5rem 1.5rem', display: 'flex', gap: '2rem', alignItems: 'center', background: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.1)' }}>
           <div className="flex-column resource-item" style={{ alignItems: 'flex-start' }}>
             <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Funds</span>
-            <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
-              RM {(playerState.funds / 1000000).toFixed(1)}M
+            <span style={{ fontSize: isCheatMode ? '1.5rem' : '1.1rem', fontWeight: 'bold', color: 'var(--accent-gold)', lineHeight: 1 }}>
+              {isCheatMode ? '∞' : `RM ${(playerState.funds / 1000000).toFixed(1)}M`}
             </span>
           </div>
           
@@ -261,8 +261,8 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
           
           <div className="flex-column resource-item" style={{ alignItems: 'flex-start' }}>
             <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>PC</span>
-            <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-teal)' }}>
-              {playerState.politicalCapital}
+            <span style={{ fontSize: isCheatMode ? '1.5rem' : '1.1rem', fontWeight: 'bold', color: 'var(--accent-teal)', lineHeight: 1 }}>
+              {isCheatMode ? '∞' : playerState.politicalCapital}
             </span>
           </div>
 

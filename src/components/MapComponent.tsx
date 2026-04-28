@@ -4,7 +4,15 @@ import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus, Minus, Home, Compass } from 'lucide-react';
 
-export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string) => void }) {
+export default function MapComponent({ 
+  onSeatClick,
+  overrideSeatColors,
+  disableInteraction
+}: { 
+  onSeatClick?: (id: string) => void;
+  overrideSeatColors?: Record<string, string>;
+  disableInteraction?: boolean;
+}) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<any, any>>(null);
   const svgRef  = useRef<d3.Selection<any, any, any, any>>(null);
@@ -155,9 +163,10 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
         return id ? ENCLAVE_SEATS.some(e => id.includes(e)) : false;
       })
       .on('click', function() {
+        if (disableInteraction) return;
         playClick();
         const id = d3.select(this).attr('data-seat') || d3.select(this).attr('id');
-        if (id && id.startsWith('P')) onSeatClick(id);
+        if (id && id.startsWith('P') && onSeatClick) onSeatClick(id);
       })
       .on('mouseenter', function() {
         // We no longer call .raise() here because mutating the DOM on hover 
@@ -169,31 +178,43 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
     // seats-layer so they are never covered by their container seats.
     zoomGroup.selectAll('.enclave-seat').raise();
     seats.forEach(seat => {
-      let leader = 'Others';
-      let firstPop = -1;
-      let secondPop = -1;
-      
-      for (const [coalition, pop] of Object.entries(seat.popularityTracker)) {
-        if (pop > firstPop) {
-          secondPop = firstPop;
-          firstPop = pop;
-          leader = coalition;
-        } else if (pop > secondPop) {
-          secondPop = pop;
-        }
-      }
-
-      // Seats within 5% margin are considered "Marginal" (Undecided on map)
-      if (firstPop - secondPop <= 5) {
-        leader = 'Undecided';
-      }
-
       let fill = 'var(--bg-card)';
-      if (leader === 'Faction1') fill = factionColors.Faction1;
-      else if (leader === 'Faction2') fill = factionColors.Faction2;
-      else if (leader === 'Faction3') fill = factionColors.Faction3;
-      else if (leader === 'Others') fill = factionColors.Others;
-      else if (leader === 'Undecided') fill = factionColors.Undecided;
+
+      if (overrideSeatColors) {
+        // If external colors are provided, use them. If not present, make it dark/undeclared
+        const externalWinner = overrideSeatColors[seat.id];
+        if (externalWinner) {
+           fill = factionColors[externalWinner] || factionColors.Others || '#8b5cf6';
+        } else {
+           fill = 'rgba(255, 255, 255, 0.05)'; // Undeclared dark color
+        }
+      } else {
+        // Standard Campaign Map coloring
+        let leader = 'Others';
+        let firstPop = -1;
+        let secondPop = -1;
+        
+        for (const [coalition, pop] of Object.entries(seat.popularityTracker)) {
+          if (pop > firstPop) {
+            secondPop = firstPop;
+            firstPop = pop;
+            leader = coalition;
+          } else if (pop > secondPop) {
+            secondPop = pop;
+          }
+        }
+
+        // Seats within 5% margin are considered "Marginal" (Undecided on map)
+        if (firstPop - secondPop <= 5) {
+          leader = 'Undecided';
+        }
+
+        if (leader === 'Faction1') fill = factionColors.Faction1;
+        else if (leader === 'Faction2') fill = factionColors.Faction2;
+        else if (leader === 'Faction3') fill = factionColors.Faction3;
+        else if (leader === 'Others') fill = factionColors.Others;
+        else if (leader === 'Undecided') fill = factionColors.Undecided;
+      }
 
       const seatId = seat.id.replace('.', '');
       zoomGroup.select('.seats-layer').selectAll(`path[id="${seatId}"], path[data-seat="${seatId}"]`)
@@ -201,7 +222,7 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
          .style('opacity', 1.0);
     });
 
-  }, [seats, svgLoaded, onSeatClick, factionColors]);
+  }, [seats, svgLoaded, onSeatClick, factionColors, overrideSeatColors, disableInteraction]);
 
   // ── Navigation Helpers ────────────────────────────────────────────────────
   // Button pan: short smooth transition is fine for discrete clicks
@@ -269,6 +290,7 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (disableInteraction) return;
       const key = e.key.toLowerCase();
       const mappedKey = ARROW_KEY_MAP[key] || key;
       
@@ -279,6 +301,7 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (disableInteraction) return;
       const key = e.key.toLowerCase();
       const mappedKey = ARROW_KEY_MAP[key] || key;
       keysHeld.current.delete(mappedKey);
@@ -302,6 +325,7 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
       />
       
       {/* Floating Navigation Controls */}
+      {!disableInteraction && (
       <div className="map-nav-wrapper" style={{ 
         position: 'absolute', 
         bottom: '24px', 
@@ -360,6 +384,7 @@ export default function MapComponent({ onSeatClick }: { onSeatClick: (id: string
           </div>
         </div>
       </div>
+      )}
 
       <style>{`
         @media (max-width: 1024px) {

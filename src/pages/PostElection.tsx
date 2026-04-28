@@ -1,12 +1,19 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
-import { Newspaper, FastForward, Play, Pause, Zap } from 'lucide-react';
+import { Newspaper, FastForward, Play, Pause, Zap, Map, EyeOff, Eye } from 'lucide-react';
+import MapComponent from '../components/MapComponent';
+import ResultInspector from '../components/ResultInspector';
 
 export default function PostElection() {
   const { seats, playerState, factionNames, factionColors, factionParties, setGamePhase, setElectionResults } = useGameStore();
   
-  const [activeView, setActiveView] = useState<'tally' | 'feed'>('tally');
+  const [activeView, setActiveView] = useState<'tally' | 'feed' | 'map'>('tally');
+  const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
+  
+  // Desktop collapse states
+  const [isFeedVisible, setIsFeedVisible] = useState(true);
+  const [isTallyVisible, setIsTallyVisible] = useState(true);
 
   // Shuffled seats for random intake
   const shuffledSeats = useMemo(() => {
@@ -46,11 +53,31 @@ export default function PostElection() {
       // Check unexpected against original un-perturbed winnerGE15
       const isUnexpected = winnerId !== seat.winnerGE15 && seat.winnerGE15 !== 'Others' && !!seat.winnerGE15;
 
-      // Calculate absolute majority votes
-      const totalVotes = (seat.candidates || []).reduce((sum: number, c: any) => sum + (c.votes || 0), 0);
-      const majorityVotes = Math.round((margin / 100) * (totalVotes > 0 ? totalVotes : 50000)); 
+      // Calculate robust GE16 turnout based on GE15 total valid votes
+      const ge15TotalVotes = (seat.candidates || []).reduce((sum: number, c: any) => sum + (c.votes || 0), 0) || 50000;
+      const turnoutVariance = 0.90 + (Math.random() * 0.20); // 0.9x to 1.1x of GE15
+      const ge16TotalVotes = Math.round(ge15TotalVotes * turnoutVariance);
+      
+      // Calculate absolute votes for each faction based on final percentages
+      const factionVotes: Record<string, number> = {};
+      for (const [faction, pop] of Object.entries(perturbedTracker)) {
+         factionVotes[faction] = Math.round(ge16TotalVotes * ((pop as number) / 100));
+      }
 
-      results[seat.id] = { winner: winnerId, isLandslide, isMarginal, isUnexpected, max, margin, majorityVotes };
+      const majorityVotes = Math.round((margin / 100) * ge16TotalVotes); 
+
+      results[seat.id] = { 
+        winner: winnerId, 
+        isLandslide, 
+        isMarginal, 
+        isUnexpected, 
+        max, 
+        margin, 
+        majorityVotes,
+        totalVotes: ge16TotalVotes,
+        factionVotes,
+        perturbedTracker
+      };
     });
     return results;
   }, [shuffledSeats]);
@@ -174,6 +201,13 @@ export default function PostElection() {
     return { counts, votes, totalVotes };
   }, [displayedSeats]);
 
+  const mapOverrideColors = useMemo(() => {
+    const colors: Record<string, string> = {};
+    displayedSeats.forEach(seat => {
+       colors[seat.id] = stableResults[seat.id].winner;
+    });
+    return colors;
+  }, [displayedSeats, stableResults]);
 
   const generateFinalAnnouncement = () => {
      // Identify overall winner
@@ -215,9 +249,25 @@ export default function PostElection() {
   }, [isComplete]);
 
   return (
-    <div className="flex-column" style={{ height: '100dvh', overflow: 'hidden', background: '#0a0a0c', color: 'white' }}>
+    <div className="flex-column" style={{ position: 'relative', height: '100dvh', overflow: 'hidden', background: '#0a0a0c', color: 'white' }}>
       
-      <div className="glass-panel live-banner" style={{ margin: 'calc(env(safe-area-inset-top, 0px) + 1rem) 1rem 1rem 1rem', border: 'none', background: 'var(--accent-red)', padding: '0.6rem 2rem', display: 'flex', alignItems: 'center', gap: '2rem', zIndex: 100, position: 'relative', borderRadius: '12px' }}>
+      {/* Background Map Component */}
+      <div className={`map-background ${activeView !== 'map' ? 'mobile-hidden-map' : ''}`} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+        <MapComponent 
+          onSeatClick={setSelectedSeatId} 
+          overrideSeatColors={mapOverrideColors}
+          disableInteraction={false}
+        />
+      </div>
+      
+      <ResultInspector 
+        seatId={selectedSeatId} 
+        onClose={() => setSelectedSeatId(null)} 
+        stableResults={stableResults}
+        declaredSeatIds={displayedSeats.map(s => s.id)}
+      />
+
+      <div className={`glass-panel live-banner ${activeView === 'map' ? 'mobile-hidden' : ''}`} style={{ margin: 'calc(env(safe-area-inset-top, 0px) + 1rem) 1rem 1rem 1rem', border: 'none', background: 'var(--accent-red)', padding: '0.6rem 2rem', display: 'flex', alignItems: 'center', gap: '2rem', zIndex: 10, position: 'relative', borderRadius: '12px', pointerEvents: 'auto' }}>
         <div style={{ fontWeight: '900', fontSize: '1.2rem', textTransform: 'uppercase', letterSpacing: '2px', flexShrink: 0, zIndex: 10 }}>LIVE UPDATE</div>
         <div className="ticker-container" style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', position: 'relative', height: '1.5rem' }}>
            {activeTickerItems.map(item => (
@@ -244,7 +294,7 @@ export default function PostElection() {
         </div>
       </div>
 
-      <div className="glass-panel flex-between live-controls-panel" style={{ margin: '0 1rem 1rem 1rem', padding: '0.8rem 1.5rem', zIndex: 10 }}>
+      <div className={`glass-panel flex-between live-controls-panel ${activeView === 'map' ? 'mobile-hidden' : ''}`} style={{ margin: '0 1rem 1rem 1rem', padding: '0.8rem 1.5rem', zIndex: 10, pointerEvents: 'auto' }}>
         <div className="speed-controls" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold', marginRight: '5px' }}>SPEED:</span>
           <button 
@@ -302,22 +352,40 @@ export default function PostElection() {
         </div>
       </div>
 
-      <div className="flex-row post-election-content" style={{ flex: 1, padding: '0 1rem 1rem 1rem', gap: '1rem', overflow: 'hidden', alignItems: 'flex-start' }}>
+      <div className="flex-row post-election-content" style={{ flex: 1, padding: '0 1rem 1rem 1rem', gap: '1rem', overflow: 'hidden', alignItems: 'flex-start', justifyContent: 'space-between', zIndex: 10, pointerEvents: 'none' }}>
         
         {/* LEFT COLUMN: Newsfeed (Scrollable) */}
-        <div className={`newsfeed-col ${activeView !== 'feed' ? 'mobile-hidden' : ''}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden', height: '100%', minWidth: 0 }}>
-          <div className="flex-between mobile-only" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem' }}>
-             <h2 style={{ letterSpacing: '1px', fontSize: '1rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>Live News Feed</h2>
-             <button 
-               onClick={() => { playClick(); setActiveView('tally'); }} 
-               className="glass-button"
-               style={{ padding: '6px 12px', fontSize: '0.7rem' }}
-             >
-               Show Tally
-             </button>
-          </div>
-          <div 
-             className="glass-panel" 
+        {isFeedVisible ? (
+          <div className={`newsfeed-col ${activeView !== 'feed' ? 'mobile-hidden' : ''}`} style={{ width: '400px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden', height: '100%', minWidth: 0, pointerEvents: 'auto', position: 'relative' }}>
+            <div className="flex-between mobile-only" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem', background: 'rgba(0,0,0,0.8)', padding: '10px', borderRadius: '8px' }}>
+               <h2 style={{ letterSpacing: '1px', fontSize: '1rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>Live News Feed</h2>
+               <div style={{ display: 'flex', gap: '0.5rem' }}>
+                 <button 
+                   onClick={() => { playClick(); setActiveView('tally'); }} 
+                   className="glass-button"
+                   style={{ padding: '6px 12px', fontSize: '0.7rem' }}
+                 >
+                   Tally
+                 </button>
+                 <button 
+                   onClick={() => { playClick(); setActiveView('map'); }} 
+                   className="glass-button"
+                   style={{ padding: '6px 12px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                 >
+                   <Map size={14} /> Map
+                 </button>
+               </div>
+            </div>
+            
+            {/* Unified Hide Button */}
+            <div className="desktop-only" style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 20 }}>
+               <button className="glass-button" style={{ padding: '4px 10px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.5)' }} onClick={() => { playClick(); setIsFeedVisible(false); }}>
+                 <EyeOff size={14} /> Hide
+               </button>
+            </div>
+
+            <div 
+               className="glass-panel" 
              style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}
              ref={tickerRef}
           >
@@ -342,18 +410,44 @@ export default function PostElection() {
             })}
           </div>
         </div>
+        ) : (
+          <div className="desktop-only" style={{ pointerEvents: 'auto' }}>
+             <button className="glass-button pulse-glow" style={{ padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.8)', fontSize: '0.7rem' }} onClick={() => { playClick(); setIsFeedVisible(true); }}>
+               <Eye size={14} /> Show Feed
+             </button>
+          </div>
+        )}
 
         {/* RIGHT COLUMN: Election Result (Stats) */}
-        <div className={`glass-panel tally-col ${activeView !== 'tally' ? 'mobile-hidden' : ''}`} style={{ width: '400px', flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '1.5rem', height: '100%', minWidth: 0 }}>
-          <div className="flex-between" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem' }}>
-            <h2 style={{ letterSpacing: '1px', fontSize: '1.2rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>Election Tally</h2>
-            <button 
-              onClick={() => { playClick(); setActiveView('feed'); }} 
-              className="glass-button mobile-only"
-              style={{ padding: '6px 12px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '5px' }}
-            >
-              <Newspaper size={14} /> Show Feed
-            </button>
+        {isTallyVisible ? (
+          <div className={`glass-panel tally-col ${activeView !== 'tally' ? 'mobile-hidden' : ''}`} style={{ width: '400px', flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '1.5rem', height: '100%', minWidth: 0, pointerEvents: 'auto', background: 'rgba(10, 10, 12, 0.85)', position: 'relative' }}>
+            <div className="flex-between" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.8rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                 <h2 style={{ letterSpacing: '1px', fontSize: '1.2rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>Election Tally</h2>
+              </div>
+              
+              {/* Unified Hide Button */}
+              <div className="desktop-only" style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 20 }}>
+                 <button className="glass-button" style={{ padding: '4px 10px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.5)' }} onClick={() => { playClick(); setIsTallyVisible(false); }}>
+                   <EyeOff size={14} /> Hide
+                 </button>
+              </div>
+            <div className="mobile-only" style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                onClick={() => { playClick(); setActiveView('feed'); }} 
+                className="glass-button"
+                style={{ padding: '6px 12px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <Newspaper size={14} /> Feed
+              </button>
+              <button 
+                onClick={() => { playClick(); setActiveView('map'); }} 
+                className="glass-button"
+                style={{ padding: '6px 12px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                <Map size={14} /> Map
+              </button>
+            </div>
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', flex: 1, overflowY: 'auto', paddingRight: '0.5rem' }}>
@@ -398,7 +492,29 @@ export default function PostElection() {
              </div>
           </div>
         </div>
+        ) : (
+          <div className="desktop-only" style={{ pointerEvents: 'auto', marginLeft: 'auto' }}>
+             <button className="glass-button pulse-glow" style={{ padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.8)', fontSize: '0.7rem' }} onClick={() => { playClick(); setIsTallyVisible(true); }}>
+               <Eye size={14} /> Show Tally
+             </button>
+          </div>
+        )}
       </div>
+
+      {/* Floating View Toggles (Desktop only) if user wants to collapse panels, but maybe not needed if it looks fine overlaid. We'll leave it as is. */}
+
+      {/* Special mobile-only Map view return button */}
+      {activeView === 'map' && (
+         <div className="mobile-only" style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}>
+            <button 
+              onClick={() => { playClick(); setActiveView('tally'); }}
+              className="glass-button pulse-glow"
+              style={{ padding: '10px 20px', fontSize: '1rem', fontWeight: 'bold', background: 'rgba(0,0,0,0.8)', color: 'white', borderRadius: '30px' }}
+            >
+              Return to Tally
+            </button>
+         </div>
+      )}
 
       <style>{`
         .ticker-item-fly {
@@ -434,6 +550,9 @@ export default function PostElection() {
             order: 2;
           }
           .mobile-hidden {
+            display: none !important;
+          }
+          .mobile-hidden-map {
             display: none !important;
           }
           .live-banner {

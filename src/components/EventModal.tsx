@@ -5,6 +5,7 @@ export default function EventModal() {
   const activeEvent = useGameStore(state => state.activeEvent);
   const resolveEvent = useGameStore(state => state.resolveEvent);
   const playerState = useGameStore(state => state.playerState);
+  const isCheatMode = useGameStore(state => state.isCheatMode);
 
   if (!activeEvent) return null;
 
@@ -103,8 +104,8 @@ export default function EventModal() {
 
         <div className="event-choices" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           {activeEvent.choices.map((choice, index) => {
-            const canAffordF = !choice.costFunds || playerState.funds >= choice.costFunds;
-            const canAffordPC = !choice.costPC || playerState.politicalCapital >= choice.costPC;
+            const canAffordF = isCheatMode || !choice.costFunds || playerState.funds >= choice.costFunds;
+            const canAffordPC = isCheatMode || !choice.costPC || playerState.politicalCapital >= choice.costPC;
             const canAfford = canAffordF && canAffordPC;
 
             return (
@@ -162,10 +163,10 @@ export default function EventModal() {
           })}
 
           {activeEvent.choices.every(choice => {
-            const canAffordF = !choice.costFunds || playerState.funds >= choice.costFunds;
-            const canAffordPC = !choice.costPC || playerState.politicalCapital >= choice.costPC;
+            const canAffordF = isCheatMode || !choice.costFunds || playerState.funds >= choice.costFunds;
+            const canAffordPC = isCheatMode || !choice.costPC || playerState.politicalCapital >= choice.costPC;
             return !canAffordF || !canAffordPC;
-          }) && (
+          }) && !isCheatMode && (
             <button
               className="glass-button action-btn-hover"
               onClick={() => {

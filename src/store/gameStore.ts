@@ -114,6 +114,9 @@ export interface GameState {
   setElectionResults: (results: Record<string, any>) => void;
   electionResults: Record<string, any> | null;
 
+  isCheatMode: boolean;
+  setCheatMode: (enabled: boolean) => void;
+
   setFactionColor: (factionId: string, color: string) => void;
   startingFactionColors: Record<string, string>;
   resetFactionColors: () => void;
@@ -184,6 +187,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     Undecided: '#6b7280'
   },
   
+  isCheatMode: false,
+  setCheatMode: (enabled) => set({ isCheatMode: enabled }),
+
   isSettingsOpen: false,
   audioSettings: loadSavedAudioSettings(),
   notificationQueue: [],
@@ -238,6 +244,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       Faction2: [],
       Faction3: [],
     },
+    isCheatMode: false,
     startingFactionColors: {
       Faction1: '#ef4444',
       Faction2: '#0ea5e9',
@@ -372,7 +379,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   
   playAction: (costFunds, costPC, effect) => {
     const state = get();
-    if (state.playerState.funds < costFunds || state.playerState.politicalCapital < costPC || state.actionsRemaining <= 0) {
+    // In cheat mode, we ignore funds and PC costs, but still respect actionsRemaining
+    if ((!state.isCheatMode && (state.playerState.funds < costFunds || state.playerState.politicalCapital < costPC)) || state.actionsRemaining <= 0) {
       return false; // Not enough resources or no actions left
     }
     
@@ -387,8 +395,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       actionsRemaining: state.actionsRemaining - 1,
       playerState: {
         ...state.playerState,
-        funds: state.playerState.funds - costFunds,
-        politicalCapital: state.playerState.politicalCapital - costPC,
+        funds: state.isCheatMode ? state.playerState.funds : state.playerState.funds - costFunds,
+        politicalCapital: state.isCheatMode ? state.playerState.politicalCapital : state.playerState.politicalCapital - costPC,
       }
     });
     return true;
