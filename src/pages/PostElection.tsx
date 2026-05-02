@@ -4,7 +4,7 @@ import { playClick } from '../utils/sfx';
 import { Newspaper, FastForward, Play, Pause, Zap, Map, EyeOff, Eye, Info } from 'lucide-react';
 import MapComponent from '../components/MapComponent';
 import ResultInspector from '../components/ResultInspector';
-import { availableParties, historicalCoalitions } from '../data/parties';
+import { availableParties } from '../data/parties';
 
 export default function PostElection() {
   const { seats, playerState, factionNames, factionColors, factionParties, setGamePhase, setElectionResults, customParties } = useGameStore();

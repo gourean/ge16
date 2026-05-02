@@ -358,7 +358,7 @@ export default function PreCampaign() {
                       <>
                         <div style={{ position: 'absolute', top: '-8px', right: '-8px', background: 'var(--accent-teal)', color: 'black', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', zIndex: 5 }}>CUSTOM</div>
                         <button 
-                          className="edit-party-btn"
+                          className="edit-party-btn action-btn-hover"
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingParty(p);
@@ -384,7 +384,6 @@ export default function PreCampaign() {
                             zIndex: 20,
                             boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                           }}
-                          className="action-btn-hover"
                           title="Edit Party"
                         >
                           <Edit2 size={16} />
