@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { 
   Megaphone, 
@@ -11,40 +11,72 @@ import {
   Target
 } from 'lucide-react';
 import { getSeatsInSameState, getThematicManifestoEffect } from '../utils/campaignUtils';
-import { playClick, playDayEnd } from '../utils/sfx';
+import { playClick, playDayEnd, playError } from '../utils/sfx';
 
-type ActionType = 'CERAMAH' | 'SMEAR' | 'SOCIAL_MEDIA' | 'GROUND_WAR' | 'CYBER_ATTACK' | 'MANIFESTO_THEMATIC';
+type ActionType = 'CERAMAH' | 'SMEAR' | 'SOCIAL_MEDIA' | 'GROUND_WAR' | 'CYBER_ATTACK' | 'MANIFESTO_THEMATIC' | 'FUNDRAISING' | 'POLITICAL_LOBBYING';
 
 export default function ActionMenu({ activeSeatId }: { activeSeatId: string | null }) {
   const [open, setOpen] = useState(false);
-  const { playAction, nextTurn, playerState, seats, actionsRemaining, pushNotification, turn, isCheatMode } = useGameStore();
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const { 
+    playAction, nextTurn, playerState, seats, actionsRemaining, 
+    pushNotification, turn, isCheatMode, notificationQueue 
+  } = useGameStore();
 
   const activeSeat = activeSeatId ? seats.find(s => s.id === activeSeatId || s.id.replace('.', '') === activeSeatId) : null;
+
+  // Immediate transition if notice is dismissed
+  useEffect(() => {
+    if (isTransitioning && notificationQueue.length === 0) {
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+        transitionTimeoutRef.current = null;
+      }
+      nextTurn();
+    }
+  }, [isTransitioning, notificationQueue.length, nextTurn]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+    };
+  }, []);
 
   const handleAction = (type: ActionType) => {
     playClick();
     let costF = 0;
     let costPC = 0;
+    let collectedFunds = 0;
     
-    if (type === 'CERAMAH') { costF = 500000; costPC = 5; }
-    if (type === 'SMEAR') { costF = 200000; costPC = 15; }
+    if (type === 'CERAMAH') { costF = 1000000; costPC = 5; }
+    if (type === 'SMEAR') { costF = 500000; costPC = 15; }
     if (type === 'SOCIAL_MEDIA') { costF = 1000000; costPC = 20; }
-    if (type === 'GROUND_WAR') { costF = 100000; costPC = 10; }
-    if (type === 'CYBER_ATTACK') { costF = 300000; costPC = 15; }
-    if (type === 'MANIFESTO_THEMATIC') { costF = 1500000; costPC = 25; }
+    if (type === 'GROUND_WAR') { costF = 500000; costPC = 10; }
+    if (type === 'CYBER_ATTACK') { costF = 500000; costPC = 15; }
+    if (type === 'MANIFESTO_THEMATIC') { costF = 3000000; costPC = 30; }
+    if (type === 'FUNDRAISING') { 
+        costF = 0; 
+        costPC = 15; 
+        // Generate funds in clean RM 100,000 increments (between 0.5M and 2.0M)
+        collectedFunds = (Math.floor(Math.random() * (20 - 5 + 1)) + 5) * 100000;
+    }
+    if (type === 'POLITICAL_LOBBYING') { costF = 2000000; costPC = -15; }
+
+    let backlashOccurred = false;
+    let nationalAddressBoost = 0;
+
+    if (type === 'MANIFESTO_THEMATIC') {
+      nationalAddressBoost = Number((Math.random() * (5.0 - 2.0) + 2.0).toFixed(1));
+    }
 
     const success = playAction(costF, costPC, (currentSeats) => {
-      // Handle backlash check (20% chance for certain actions)
-      let backlash = false;
+      // Handle backlash check (30% chance for certain actions)
       if (type === 'SMEAR' || type === 'CYBER_ATTACK') {
-        if (Math.random() < 0.2) {
-          backlash = true;
-          // Notify backlash via in-game notification
-          setTimeout(() => pushNotification({
-            title: "Backlash Triggered",
-            message: "⚠️ Your aggressive tactics have alienated some moderate voters. Popularity gains reduced.",
-            type: "warning"
-          }), 100);
+        if (Math.random() < 0.3) {
+          backlashOccurred = true;
         }
       }
 
@@ -55,7 +87,6 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
       // Manifesto category for thematic launch (choose one randomly or rotate)
       const categories: ("Economy" | "Identity" | "Institutional" | "Infrastructure" | "Labor")[] = ["Economy", "Identity", "Labor"];
       const selectedCategory = categories[Math.floor(Math.random() * categories.length)];
-      const manifestoBonus = type === 'MANIFESTO_THEMATIC' ? getThematicManifestoEffect(selectedCategory, playerState.manifestoChoices) : null;
 
       return currentSeats.map(s => {
         const isSelected = activeSeatId && (s.id === activeSeatId || s.id.replace('.', '') === activeSeatId);
@@ -73,13 +104,13 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
           else if (isInState) boost = 3;
           else boost = 0;
           
-          newTracker[myCoal] = Math.min(100, newTracker[myCoal] + (backlash ? boost * 0.5 : boost));
+          newTracker[myCoal] = Math.min(100, newTracker[myCoal] + boost);
         } 
         else if (type === 'SMEAR') {
            if (isSelected) {
              let opp = findHighestOpponent(newTracker, myCoal as string);
-             newTracker[opp as keyof typeof newTracker] = Math.max(0, newTracker[opp as keyof typeof newTracker] - (backlash ? 4 : 8));
-             newTracker[myCoal] += (backlash ? 0 : 4);
+             newTracker[opp as keyof typeof newTracker] = Math.max(0, newTracker[opp as keyof typeof newTracker] - (backlashOccurred ? 4 : 8));
+             newTracker[myCoal] += (backlashOccurred ? 0 : 4);
            }
         }
         else if (type === 'SOCIAL_MEDIA') {
@@ -97,52 +128,93 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
         else if (type === 'CYBER_ATTACK') {
           // National opponent drop
           let opp = findHighestOpponent(newTracker, myCoal as string);
-          penalty = backlash ? 0 : 3;
+          penalty = backlashOccurred ? 0 : 3;
           newTracker[opp as keyof typeof newTracker] = Math.max(0, newTracker[opp as keyof typeof newTracker] - penalty);
-          if (backlash) newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 2);
+          if (backlashOccurred) newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 2);
         }
         else if (type === 'MANIFESTO_THEMATIC') {
-          // Boost based on manifesto choices
-          if (manifestoBonus) {
-            Object.entries(manifestoBonus).forEach(([demo, val]) => {
-              // Simple mapping: if seat matches demo or has it in data
-              if (demo === 'urban' && s.isUrban) newTracker[myCoal] += (val / 10);
-              if (demo === 'rural' && s.isRural) newTracker[myCoal] += (val / 10);
-              if (demo === 'borneo' && s.isBorneo) newTracker[myCoal] += (val / 10);
-              // General boost for others
-              if (['youth', 'b40', 'm40', 'reformist', 'nationalist'].includes(demo)) {
-                newTracker[myCoal] += (val / 20);
-              }
-            });
-          }
-          newTracker[myCoal] = Math.min(100, newTracker[myCoal]);
+          // Powerful Nationwide boost (Buffed: 2-5%)
+          newTracker[myCoal] = Math.min(100, newTracker[myCoal] + nationalAddressBoost);
+        }
+        else if (type === 'FUNDRAISING') {
+          // Funds added below via state update
+        }
+        else if (type === 'POLITICAL_LOBBYING') {
+          // No popularity hit anymore
         }
         
         return { ...s, popularityTracker: newTracker };
       });
     });
 
-    if (success) {
-      let successMsg = "Action executed successfully!";
-      if (type === 'CERAMAH' && activeSeat) successMsg = `Ceramah mobilized supporters across ${activeSeat.state}!`;
-      else if (type === 'SMEAR' && activeSeat) successMsg = `Smear campaign executed in ${activeSeat.name}!`;
-      else if (type === 'GROUND_WAR' && activeSeat) successMsg = `Ground operation in ${activeSeat.name} completed.`;
-      else if (type === 'SOCIAL_MEDIA') successMsg = "Social Blitz boosted national urban sentiment!";
-      else if (type === 'CYBER_ATTACK') successMsg = "Cyber attack disrupted opponent communications!";
-      else if (type === 'MANIFESTO_THEMATIC') successMsg = "Policy Rally energized the base!";
+    if (success && type === 'FUNDRAISING') {
+        useGameStore.setState((s) => ({
+            playerState: {
+                ...s.playerState,
+                funds: s.playerState.funds + collectedFunds
+            }
+        }));
+    }
 
-      pushNotification({
-        title: "Success",
-        message: successMsg,
-        type: "success",
-        duration: 3000
-      });
+    if (success && type === 'POLITICAL_LOBBYING') {
+        // No stability hit anymore
+    }
+
+    if (success && type === 'MANIFESTO_THEMATIC') {
+        // Stability boost for National Address
+        useGameStore.setState((s) => ({
+            playerState: {
+                ...s.playerState,
+                stability: Math.min(100, s.playerState.stability + 5)
+            }
+        }));
+    }
+
+    if (success) {
+      if (backlashOccurred) {
+        playError();
+        pushNotification({
+          title: "Backlash Triggered",
+          message: "⚠️ Backlash! Voters perceived your aggressive tactics as hate speech, alienating moderate support.",
+          type: "warning",
+          duration: 6000
+        });
+      } else {
+        let successMsg = "Action executed successfully!";
+        if (type === 'CERAMAH' && activeSeat) successMsg = `Ceramah mobilized supporters across ${activeSeat.state}!`;
+        else if (type === 'SMEAR' && activeSeat) successMsg = `Smear campaign executed in ${activeSeat.name}!`;
+        else if (type === 'GROUND_WAR' && activeSeat) successMsg = `Ground operation in ${activeSeat.name} completed.`;
+        else if (type === 'SOCIAL_MEDIA') successMsg = "Campaign gained traction among young and urban voters!";
+        else if (type === 'CYBER_ATTACK') successMsg = "Opposition narrative weakened; widespread confusion triggered among opponent supporters.";
+        else if (type === 'MANIFESTO_THEMATIC') successMsg = `National Address complete! Public confidence surged by ${nationalAddressBoost}% nationwide.`;
+        else if (type === 'FUNDRAISING') successMsg = `Grassroots Milo Tin drive successful! Collected RM ${(collectedFunds / 1000000).toFixed(2)}M.`;
+        else if (type === 'POLITICAL_LOBBYING') successMsg = "Cash is King! Strategic lobbying has secured 15 Political Capital.";
+
+        pushNotification({
+          title: "Success",
+          message: successMsg,
+          type: "success",
+          duration: 6000
+        });
+      }
       setOpen(false);
     } else {
+      playError();
+      const needsFunds = !isCheatMode && playerState.funds < costF;
+      const needsPC = !isCheatMode && playerState.politicalCapital < costPC;
+      const needsActions = actionsRemaining <= 0;
+
+      let errorMsg = "Unable to execute action.";
+      if (needsActions) errorMsg = "No strategic actions remaining for today.";
+      else if (needsFunds && needsPC) errorMsg = "Insufficient Funds and Political Capital!";
+      else if (needsFunds) errorMsg = "Insufficient Funds to deploy this strategy.";
+      else if (needsPC) errorMsg = "Insufficient Political Capital to authorize this action.";
+
       pushNotification({
         title: "Action Failed",
-        message: actionsRemaining <= 0 ? "You have no actions remaining today." : "Not enough funds or political capital!",
-        type: "error"
+        message: errorMsg,
+        type: "error",
+        duration: 6000
       });
     }
   };
@@ -193,52 +265,73 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
             <ActionBtn 
               icon={<Megaphone size={20} />} 
               label="Ceramah" 
-              sub="RM 0.5M | 5 PC" 
+              sub="RM 1.0M | 5 PC" 
               desc={!activeSeat ? "Target Required" : "Statewide rally"}
               onClick={() => handleAction('CERAMAH')} 
-              disabled={!activeSeat}
+              disabled={!activeSeat || isTransitioning}
             />
             
             <ActionBtn 
               icon={<AlertTriangle size={20} />} 
               label="Smear" 
-              sub="RM 0.2M | 15 PC" 
+              sub="RM 0.5M | 15 PC" 
               desc={!activeSeat ? "Target Required" : "Targeted damage"}
               onClick={() => handleAction('SMEAR')} 
-              disabled={!activeSeat}
+              disabled={!activeSeat || isTransitioning}
             />
 
             <ActionBtn 
               icon={<Smartphone size={20} />} 
-              label="Social Blitz" 
+              label="Online Campaign" 
               sub="RM 1.0M | 20 PC" 
-              desc="National urban boost"
+              desc="Young & urban boost"
               onClick={() => handleAction('SOCIAL_MEDIA')} 
+              disabled={isTransitioning}
             />
 
             <ActionBtn 
               icon={<Users size={20} />} 
               label="Ground War" 
-              sub="RM 0.1M | 10 PC" 
+              sub="RM 0.5M | 10 PC" 
               desc={!activeSeat ? "Target Required" : "Localized rural"}
               onClick={() => handleAction('GROUND_WAR')} 
-              disabled={!activeSeat}
+              disabled={!activeSeat || isTransitioning}
             />
 
             <ActionBtn 
               icon={<CloudLightning size={20} />} 
               label="Cyber Attack" 
-              sub="RM 0.3M | 15 PC" 
+              sub="RM 0.5M | 15 PC" 
               desc="National disruption"
               onClick={() => handleAction('CYBER_ATTACK')} 
+              disabled={isTransitioning}
             />
 
             <ActionBtn 
               icon={<ShieldCheck size={20} />} 
-              label="Policy Rally" 
-              sub="RM 1.5M | 25 PC" 
-              desc="Manifesto boost"
+              label="National Address" 
+              sub="RM 3.0M | 30 PC" 
+              desc="Nationwide +2-5% boost & +5 Stability"
               onClick={() => handleAction('MANIFESTO_THEMATIC')} 
+              disabled={isTransitioning}
+            />
+
+            <ActionBtn 
+              icon={<Users size={20} />} 
+              label="Milo Tin Drive" 
+              sub="Random RM | 15 PC" 
+              desc="Grassroots fundraising"
+              onClick={() => handleAction('FUNDRAISING')} 
+              disabled={isTransitioning}
+            />
+
+            <ActionBtn 
+              icon={<ShieldCheck size={20} />} 
+              label="Lobbying" 
+              sub="RM 2.0M | +15 PC" 
+              desc="Cash is King"
+              onClick={() => handleAction('POLITICAL_LOBBYING')} 
+              disabled={isTransitioning}
             />
           </div>
 
@@ -295,41 +388,42 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
 
         <button 
           className={`glass-button plan-btn ${open ? 'active' : ''}`}
+          disabled={isTransitioning}
           onClick={() => {
             setOpen(!open);
             playClick();
           }}
-          style={{ padding: '1rem 2rem', fontSize: '1.1rem', minWidth: '160px' }}
+          style={{ padding: '1rem 2rem', fontSize: '1.1rem', minWidth: '160px', opacity: isTransitioning ? 0.5 : 1 }}
         >
           {open ? 'Back' : 'Plan Action'}
         </button>
         
         <button 
           className="glass-button active pulse-glow end-day-btn" 
+          disabled={isTransitioning}
           onClick={() => {
-            if (turn < 14) {
-              pushNotification({
-                title: "Day Complete",
-                message: `Day ${turn} strategy finalized. Actions replenished.`,
-                type: "info",
-                duration: 1500
-              });
-            } else {
+            if (turn >= 14) {
+              setIsTransitioning(true);
               pushNotification({
                 title: "Campaign Concluded",
                 message: "Final strategies deployed. Proceeding to Election Night...",
                 type: "success",
-                duration: 2000
+                duration: 4500
               });
             }
             
-            // Delay nextTurn so that it doesn't overlap at all with the summary
-            setTimeout(() => {
+            // nextTurn in gameStore will push the 'Day Complete' notification
+            const timeout = setTimeout(() => {
               nextTurn();
-            }, turn < 14 ? 1600 : 2100);
+            }, turn < 14 ? 500 : 5000);
+
+            if (turn >= 14) {
+              transitionTimeoutRef.current = timeout;
+            }
+            
             playDayEnd();
           }}
-          style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}
+          style={{ padding: '1rem 2rem', fontSize: '1.1rem', opacity: isTransitioning ? 0.7 : 1 }}
         >
           {turn < 14 ? 'End Day' : 'Election Night'}
         </button>

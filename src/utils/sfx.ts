@@ -108,3 +108,30 @@ export const playDayEnd = () => {
   osc1.start();
   osc1.stop(ctx.currentTime + 0.6);
 };
+
+/**
+ * Low discordant buzz for errors or backlash.
+ */
+export const playError = () => {
+  const { audioSettings } = useGameStore.getState();
+  if (audioSettings.isMuted || audioSettings.sfxVolume <= 0) return;
+
+  const ctx = getCtx();
+  const volume = audioSettings.sfxVolume / 100;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(150, ctx.currentTime);
+  osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.3);
+
+  gain.gain.setValueAtTime(volume * 0.3, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start();
+  osc.stop(ctx.currentTime + 0.3);
+};

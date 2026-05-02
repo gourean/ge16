@@ -1,13 +1,22 @@
 import { useGameStore } from '../store/gameStore';
 import { X } from 'lucide-react';
 import { playClick } from '../utils/sfx';
+import { availableParties } from '../data/parties';
 
 export default function SeatInspector({ seatId, onClose }: { seatId: string | null; onClose: () => void }) {
-  const { seats, factionNames, factionParties, factionColors } = useGameStore();
+  const { seats, factionNames, factionParties, factionColors, customParties } = useGameStore();
   
   if (!seatId) return null;
   const seat = seats.find(s => s.id.replace('.', '') === seatId);
   if (!seat) return null;
+
+  const resolvePartyName = (id: string) => {
+    const custom = customParties.find(cp => cp.id === id);
+    if (custom) return custom.name;
+    const available = availableParties.find(ap => ap.id === id);
+    if (available) return available.name;
+    return id;
+  };
 
   return (
     <div className="glass-panel animate-fade-in seat-inspector-container" style={{ 
@@ -97,7 +106,7 @@ export default function SeatInspector({ seatId, onClose }: { seatId: string | nu
                 </div>
                 {parties.length > 0 && (
                   <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={parties.join(', ')}>
-                    {parties.join(' · ')}
+                    {parties.map(p => resolvePartyName(p)).join(' · ')}
                   </div>
                 )}
                 <div style={{ width: '100%', background: 'rgba(255,255,255,0.1)', height: '8px', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>

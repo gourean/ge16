@@ -9,6 +9,7 @@ export interface Party {
   demographic: DemographicFocus;
   baseStrength: number; // General representation of strength out of 100 for calculating split percentages
   tags: string[];
+  voterTransfer?: Record<string, number>; // Mapping of party ID to percentage (0-1) to transfer from
 }
 
 export const availableParties: Party[] = [

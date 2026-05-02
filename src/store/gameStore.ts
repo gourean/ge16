@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { GameEvent } from '../data/events';
 import { gameEvents } from '../data/events';
 import { normalizePopularity } from '../utils/campaignUtils';
+import type { Party } from '../data/parties';
 
 export interface GameNotification {
   id: string;
@@ -62,6 +63,7 @@ export interface PlayerState {
   componentParties: string[];
   manifestoChoices: Record<string, 'agree' | 'disagree' | 'neutral' | null>;
   manifestoTags: string[];
+  flags: Record<string, boolean>;
 }
 
 export interface GameState {
@@ -120,19 +122,25 @@ export interface GameState {
   setFactionColor: (factionId: string, color: string) => void;
   startingFactionColors: Record<string, string>;
   resetFactionColors: () => void;
+
+  customParties: Party[];
+  addCustomParty: (party: Party) => void;
+  updateCustomParty: (party: Party) => void;
+  deleteCustomParty: (id: string) => void;
 }
 
-const initialPlayerState = {
-  funds: 10000000, // 10 million base
-  politicalCapital: 100, // starting PC
+const getInitialPlayerState = (): PlayerState => ({
+  funds: 15000000,
+  politicalCapital: 100,
   stability: 100,
   stanceHistory: {},
   currentCoalition: 'Faction1',
   coalitionName: '',
   componentParties: [],
   manifestoChoices: {},
-  manifestoTags: []
-} as PlayerState;
+  manifestoTags: [],
+  flags: {}
+});
 
 const STORAGE_KEY = 'ge16_audio_settings';
 
@@ -154,7 +162,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   gamePhase: 'PRE_CAMPAIGN',
   turn: 1,
   seats: [],
-  playerState: initialPlayerState,
+  playerState: getInitialPlayerState(),
   factionColors: {
     Faction1: '#ef4444',
     Faction2: '#0ea5e9',
@@ -174,6 +182,16 @@ export const useGameStore = create<GameState>((set, get) => ({
     Faction2: [],
     Faction3: [],
   },
+  customParties: [],
+  addCustomParty: (party) => set((state) => ({
+    customParties: [...state.customParties, party]
+  })),
+  updateCustomParty: (updatedParty) => set((state) => ({
+    customParties: state.customParties.map(p => p.id === updatedParty.id ? updatedParty : p)
+  })),
+  deleteCustomParty: (id) => set((state) => ({
+    customParties: state.customParties.filter(p => p.id !== id)
+  })),
   activeEvent: null,
   hasTriggeredEventThisTurn: false,
   triggeredEventIds: [],
@@ -218,7 +236,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   resetGame: () => set({
     gamePhase: 'PRE_CAMPAIGN',
     turn: 1,
-    playerState: initialPlayerState,
+    playerState: getInitialPlayerState(),
     activeEvent: null,
     hasTriggeredEventThisTurn: false,
     triggeredEventIds: [],
@@ -251,7 +269,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       Faction3: '#2563eb',
       Others: '#8b5cf6',
       Undecided: '#6b7280'
-    }
+    },
+    customParties: []
   }),
   
   selectCoalition: (coalitionName, componentParties, colors, opponentNames) => set((state) => {
@@ -367,12 +386,35 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
     }
 
+    // --- PC REPLENISHMENT TIERS ---
+    let totalPCGain = 0;
+    if (state.playerState.stability > 85) {
+        totalPCGain = 10;
+    } else if (state.playerState.stability > 50) {
+        totalPCGain = 5;
+    }
+    const finalPoliticalCapital = state.playerState.politicalCapital + totalPCGain;
+
+    const dayCompleteMsg = `Day ${state.turn} strategy finalized. Actions replenished. +${totalPCGain} PC earned!`;
+
+    notifications.push({
+        id: `day_end_${state.turn}_${Date.now()}`,
+        title: "Day Complete",
+        message: dayCompleteMsg,
+        type: "info",
+        duration: 6000
+    });
+
     return { 
         turn: state.turn + 1,
         seats: newSeats,
         activeEvent: nextEvent,
         hasTriggeredEventThisTurn: willTrigger,
         actionsRemaining: 3,
+        playerState: {
+            ...state.playerState,
+            politicalCapital: finalPoliticalCapital
+        },
         notificationQueue: notifications
     };
   }),
@@ -461,7 +503,8 @@ export const useGameStore = create<GameState>((set, get) => ({
               }));
           }
 
-          choice.effect(state, wrappedSet as any);
+          // Pass the FRESH state to the effect function
+          choice.effect(get(), wrappedSet as any);
       }
       
       set({ 

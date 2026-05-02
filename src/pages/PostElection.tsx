@@ -1,15 +1,25 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
-import { Newspaper, FastForward, Play, Pause, Zap, Map, EyeOff, Eye } from 'lucide-react';
+import { Newspaper, FastForward, Play, Pause, Zap, Map, EyeOff, Eye, Info } from 'lucide-react';
 import MapComponent from '../components/MapComponent';
 import ResultInspector from '../components/ResultInspector';
+import { availableParties, historicalCoalitions } from '../data/parties';
 
 export default function PostElection() {
-  const { seats, playerState, factionNames, factionColors, factionParties, setGamePhase, setElectionResults } = useGameStore();
+  const { seats, playerState, factionNames, factionColors, factionParties, setGamePhase, setElectionResults, customParties } = useGameStore();
   
   const [activeView, setActiveView] = useState<'tally' | 'feed' | 'map'>('tally');
+  const [activeFactionPop, setActiveFactionPop] = useState<string | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
+
+  const resolvePartyName = (id: string) => {
+    const custom = customParties.find(cp => cp.id === id);
+    if (custom) return custom.name;
+    const available = availableParties.find(ap => ap.id === id);
+    if (available) return available.name;
+    return id;
+  };
   
   // Desktop collapse states
   const [isFeedVisible, setIsFeedVisible] = useState(true);
@@ -35,14 +45,17 @@ export default function PostElection() {
       let max = -1;
       let secondMax = -1;
       let winnerId = 'Others';
+      let runnerUpId = 'Others';
 
       for (const [faction, pop] of Object.entries(perturbedTracker)) {
         if ((pop as number) > max) {
           secondMax = max;
+          runnerUpId = winnerId;
           max = pop as number;
           winnerId = faction;
         } else if ((pop as number) > secondMax) {
           secondMax = pop as number;
+          runnerUpId = faction;
         }
       }
 
@@ -68,6 +81,7 @@ export default function PostElection() {
 
       results[seat.id] = { 
         winner: winnerId, 
+        runnerUp: runnerUpId,
         isLandslide, 
         isMarginal, 
         isUnexpected, 
@@ -82,10 +96,10 @@ export default function PostElection() {
     return results;
   }, [shuffledSeats]);
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(-3); 
   const [speed, setSpeed] = useState(1000); // Default Slow Speed
   const [isPaused, setIsPaused] = useState(false);
-  const [headlines, setHeadlines] = useState<string[]>(["ELECTION 2026: DISPENSATION BEGINS...", "VOTES ARE BEING COUNTED ACROSS THE NATION..."]);
+  const [headlines, setHeadlines] = useState<string[]>(["ELECTION 2026: DISPENSATION BEGINS..."]);
 
   // Ticker banner state — dynamic spawning system
   const [activeTickerItems, setActiveTickerItems] = useState<{ id: number, text: string }[]>([]);
@@ -98,21 +112,38 @@ export default function PostElection() {
   const tickerRef = useRef<HTMLDivElement>(null);
 
   const displayedSeats = useMemo(() => {
-    return shuffledSeats.slice(0, currentIndex);
+    return shuffledSeats.slice(0, Math.max(0, currentIndex));
   }, [shuffledSeats, currentIndex]);
 
   // Simulation loop
   useEffect(() => {
     if (currentIndex < shuffledSeats.length && !isPaused) {
       const timer = setTimeout(() => {
+        if (currentIndex < 0) {
+           const introLines = [
+             "SPR OFFICIAL: POLLS ARE NOW OFFICIALLY CLOSED.",
+             "VOTES ARE BEING COUNTED ACROSS THE NATION...",
+             "STAY TUNED FOR LIVE UPDATES AS RESULTS TRICKLE IN."
+           ];
+           // Map -3 to index 0, -2 to index 1, etc.
+           const introIdx = 3 + currentIndex;
+           if (introLines[introIdx]) {
+              setHeadlines(prev => [introLines[introIdx], ...prev.slice(0, 100)]);
+              queueRef.current.push(introLines[introIdx]);
+           }
+           setCurrentIndex(prev => prev + 1);
+           return;
+        }
+
         const nextSeat = shuffledSeats[currentIndex];
         const result = stableResults[nextSeat.id];
         
-        const winnerName = factionNames[result.winner] || result.winner;
+        const winnerName = factionNames[result.winner as keyof typeof factionNames] || result.winner;
+        const runnerUpName = factionNames[result.runnerUp as keyof typeof factionNames] || result.runnerUp;
         let newHeadline = "";
         
-        // Randomly pick reporting style to avoid uniformity
-        const style = Math.floor(Math.random() * 5);
+        // Randomly pick reporting style to avoid uniformity (Standard styles: 0-6)
+        const style = Math.floor(Math.random() * 7);
         
         // Stricter/Random "Unexpected" reporting as requested
         // Only report as "Unexpected" if it actually flipped AND a random 10% chance triggers
@@ -122,14 +153,21 @@ export default function PostElection() {
         if (showUnexpected) {
            const variations = [
              `🚨 BREAKING: STUNNING UPSET in ${nextSeat.name}! ${winnerName} takes the seat by a majority of ${majStr} votes!`,
-             `🔥 SHOCKWAVE: Safe seat of ${nextSeat.name} has been FLIPPED by ${winnerName}! Majority: ${majStr}.`,
              `😱 UNEXPECTED: Election maps rewritten as ${winnerName} claims ${nextSeat.name} with ${majStr} majority!`
            ];
            newHeadline = variations[Math.floor(Math.random() * variations.length)];
         } else if (result.isLandslide) {
-           newHeadline = `🌟 LANDSLIDE: ${winnerName} sweeps ${nextSeat.name} with a massive majority of ${majStr} votes!`;
+           const variations = [
+             `🌟 LANDSLIDE: ${winnerName} sweeps ${nextSeat.name} with a massive majority of ${majStr} votes!`,
+             `🏆 SUPERMAJORITY: ${winnerName} dominates ${nextSeat.name} with a crushing majority of ${majStr}!`
+           ];
+           newHeadline = variations[Math.floor(Math.random() * variations.length)];
         } else if (result.isMarginal) {
-           newHeadline = `⚖️ RAZOR THIN: ${winnerName} holds on in ${nextSeat.name} by a narrow majority of ${majStr}.`;
+           const variations = [
+             `🗳️ MARGINAL WIN: ${winnerName} holds on in ${nextSeat.name} by a narrow majority of ${majStr}.`,
+             `⚖️ RAZOR THIN: ${winnerName} scrapes through in ${nextSeat.name} with a tiny majority of ${majStr}!`
+           ];
+           newHeadline = variations[Math.floor(Math.random() * variations.length)];
         } else {
            switch(style) {
              case 0: newHeadline = `✅ DECLARED: ${nextSeat.name} goes to ${winnerName} with a ${majStr} majority.`; break;
@@ -137,7 +175,32 @@ export default function PostElection() {
              case 2: newHeadline = `🏛️ SEAT WON: ${nextSeat.name} falls to ${winnerName} by a majority of ${majStr}.`; break;
              case 3: newHeadline = `🗞️ JUST IN: ${winnerName} claims ${nextSeat.name} with a comfortable ${majStr} majority.`; break;
              case 4: newHeadline = `💡 ${nextSeat.name} called for ${winnerName}. Majority established at ${majStr}.`; break;
+             case 5: newHeadline = `🚩 CAPTURE: ${winnerName} captures ${nextSeat.name} with a ${majStr} majority.`; break;
+             case 6: 
+               newHeadline = `📉 LOSS: ${runnerUpName} suffers loss as ${winnerName} takes ${nextSeat.name} by ${majStr} votes.`; 
+               break;
+             default: newHeadline = `✅ DECLARED: ${nextSeat.name} goes to ${winnerName} with a ${majStr} majority.`; break;
            }
+        }
+
+        // Random chance to inject a "leading" or "counting" status for future seats or general flavor
+        if (Math.random() < 0.2 && currentIndex + 2 < shuffledSeats.length) {
+          const flavorChance = Math.random();
+          let flavorHeadline = "";
+          
+          if (flavorChance < 0.6) {
+            const futureSeat = shuffledSeats[currentIndex + 1];
+            const futureResult = stableResults[futureSeat.id];
+            const leadingParty = factionNames[futureResult.winner as keyof typeof factionNames] || futureResult.winner;
+            flavorHeadline = `📢 UNOFFICIAL: ${leadingParty} is leading in ${futureSeat.name} as votes are still counting...`;
+          } else {
+            flavorHeadline = `⏳ COUNTING: Seats are still counting in several regions. Turnout remains high.`;
+          }
+          
+          if (flavorHeadline) {
+            setHeadlines(prev => [flavorHeadline, ...prev.slice(0, 100)]);
+            if (Math.random() < 0.3) queueRef.current.push(flavorHeadline);
+          }
         }
 
         setHeadlines(prev => [newHeadline, ...prev.slice(0, 100)]);
@@ -175,10 +238,12 @@ export default function PostElection() {
     return () => clearInterval(spawnTimer);
   }, []); // Run once on mount
 
-  // Scroll newsfeed container to top when new headline arrives
+  // Scroll newsfeed container to top when new headline arrives (only if user is already near top)
   useEffect(() => {
     if (tickerRef.current) {
-      tickerRef.current.scrollTop = 0;
+      if (tickerRef.current.scrollTop < 50) {
+        tickerRef.current.scrollTop = 0;
+      }
     }
   }, [headlines]);
 
@@ -267,7 +332,7 @@ export default function PostElection() {
         declaredSeatIds={displayedSeats.map(s => s.id)}
       />
 
-      <div className={`glass-panel live-banner ${activeView === 'map' ? 'mobile-hidden' : ''}`} style={{ margin: 'calc(env(safe-area-inset-top, 0px) + 1rem) 1rem 1rem 1rem', border: 'none', background: 'var(--accent-red)', padding: '0.6rem 2rem', display: 'flex', alignItems: 'center', gap: '2rem', zIndex: 10, position: 'relative', borderRadius: '12px', pointerEvents: 'auto' }}>
+      <div className={`glass-panel live-banner ${activeView === 'map' ? 'mobile-hidden' : ''}`} style={{ margin: 'calc(env(safe-area-inset-top, 0px) + 1rem) 1rem 1rem 1rem', border: 'none', background: 'var(--accent-red)', padding: '0.6rem 5rem 0.6rem 2rem', display: 'flex', alignItems: 'center', gap: '2rem', zIndex: 10, position: 'relative', borderRadius: '12px', pointerEvents: 'auto' }}>
         <div style={{ fontWeight: '900', fontSize: '1.2rem', textTransform: 'uppercase', letterSpacing: '2px', flexShrink: 0, zIndex: 10 }}>LIVE UPDATE</div>
         <div className="ticker-container" style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', position: 'relative', height: '1.5rem' }}>
            {activeTickerItems.map(item => (
@@ -290,7 +355,7 @@ export default function PostElection() {
            ))}
         </div>
         <div className="glass-panel declared-badge" style={{ background: 'rgba(0,0,0,0.3)', padding: '4px 12px', border: 'none', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', flexShrink: 0 }}>
-          {currentIndex} / {seats.length} SEATS DECLARED
+          {Math.max(0, currentIndex)} / {seats.length} SEATS DECLARED
         </div>
       </div>
 
@@ -456,11 +521,48 @@ export default function PostElection() {
               const barWidth = Math.min(100, (count / 222) * 100);
               const color = factionColors[id];
               return (
-                <div key={id} className="animate-fade-in">
+                <div key={id} className="animate-fade-in" style={{ position: 'relative', zIndex: activeFactionPop === id ? 100 : 1 }}>
                    <div className="flex-between" style={{ marginBottom: '6px' }}>
-                     <span style={{ fontWeight: 'bold', color: color, fontSize: '0.9rem', letterSpacing: '0.5px' }}>{name}</span>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => { playClick(); setActiveFactionPop(activeFactionPop === id ? null : id); }}>
+                        <span style={{ fontWeight: 'bold', color: color, fontSize: '0.9rem', letterSpacing: '0.5px' }}>{name}</span>
+                        <Info size={12} style={{ opacity: 0.6, color: 'var(--text-muted)' }} />
+                     </div>
                      <span style={{ fontSize: '1.4rem', fontWeight: '900', fontFamily: 'var(--font-heading)' }}>{count}</span>
                    </div>
+
+                   {/* Party Popover */}
+                   {activeFactionPop === id && (
+                     <div 
+                       className="glass-panel animate-fade-in" 
+                       style={{ 
+                         position: 'absolute', 
+                         top: '100%', 
+                         left: '0', 
+                         zIndex: 1000,
+                         padding: '0.8rem',
+                         minWidth: '200px',
+                         background: 'rgba(15, 15, 20, 0.98)',
+                         border: `1px solid ${color}88`,
+                         boxShadow: `0 8px 32px rgba(0,0,0,0.8), 0 0 15px ${color}22`
+                       }}
+                     >
+                       <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px', fontWeight: 'bold' }}>Component Parties</div>
+                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                         {(factionParties[id as keyof typeof factionParties] || []).map(p => (
+                           <span key={p} style={{ 
+                             fontSize: '0.7rem', 
+                             background: 'rgba(255,255,255,0.05)', 
+                             padding: '2px 8px', 
+                             borderRadius: '4px',
+                             color: 'var(--text-primary)',
+                             border: '1px solid rgba(255,255,255,0.1)'
+                           }}>
+                             {resolvePartyName(p)}
+                           </span>
+                         ))}
+                       </div>
+                     </div>
+                   )}
                    <div style={{ height: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '20px', overflow: 'hidden', position: 'relative', border: '1px solid rgba(255,255,255,0.05)' }}>
                       <div 
                         style={{ 

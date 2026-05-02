@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { playClick } from '../utils/sfx';
+import { availableParties } from '../data/parties';
 
 interface ResultInspectorProps {
   seatId: string | null;
@@ -11,8 +12,17 @@ interface ResultInspectorProps {
 }
 
 export default function ResultInspector({ seatId, onClose, stableResults, declaredSeatIds }: ResultInspectorProps) {
-  const { seats, factionNames, factionColors, factionParties } = useGameStore();
+  const { seats, factionNames, factionColors, factionParties, customParties } = useGameStore();
   const [showMoreInfo, setShowMoreInfo] = useState(false);
+  const [activeFactionPop, setActiveFactionPop] = useState<string | null>(null);
+
+  const resolvePartyName = (id: string) => {
+    const custom = customParties.find(cp => cp.id === id);
+    if (custom) return custom.name;
+    const available = availableParties.find(ap => ap.id === id);
+    if (available) return available.name;
+    return id;
+  };
   
   if (!seatId) return null;
   const cleanId = seatId.replace('.', '');
@@ -94,11 +104,46 @@ export default function ResultInspector({ seatId, onClose, stableResults, declar
                    if (name === 'Faction 3' && (!factionParties.Faction3 || factionParties.Faction3.length === 0)) return null;
                    
                    return (
-                     <div key={coalition} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color, flexShrink: 0 }} />
-                           <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
-                        </div>
+                      <div key={coalition} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '10px', alignItems: 'center', marginBottom: '8px', position: 'relative', zIndex: activeFactionPop === coalition ? 100 : 1 }}>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', cursor: 'pointer' }} onClick={() => { playClick(); setActiveFactionPop(activeFactionPop === coalition ? null : coalition); }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color, flexShrink: 0 }} />
+                            <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+                            <Info size={10} style={{ opacity: 0.5, flexShrink: 0 }} />
+                         </div>
+
+                         {/* Party Popover */}
+                         {activeFactionPop === coalition && (
+                           <div 
+                             className="glass-panel animate-fade-in" 
+                             style={{ 
+                               position: 'absolute', 
+                               top: '100%', 
+                               left: '0', 
+                               zIndex: 1000,
+                               padding: '0.6rem',
+                               minWidth: '180px',
+                               background: 'rgba(10, 10, 12, 0.98)',
+                               border: `1px solid ${color}88`,
+                               boxShadow: '0 8px 32px rgba(0,0,0,0.8)'
+                             }}
+                           >
+                             <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '1px', fontWeight: 'bold' }}>Component Parties</div>
+                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                               {(factionParties[coalition as keyof typeof factionParties] || []).map(p => (
+                                 <span key={p} style={{ 
+                                   fontSize: '0.65rem', 
+                                   background: 'rgba(255,255,255,0.05)', 
+                                   padding: '1px 6px', 
+                                   borderRadius: '4px',
+                                   color: 'var(--text-primary)',
+                                   border: '1px solid rgba(255,255,255,0.1)'
+                                 }}>
+                                   {resolvePartyName(p)}
+                                 </span>
+                               ))}
+                             </div>
+                           </div>
+                         )}
                         <div style={{ textAlign: 'right', fontFamily: 'monospace', fontSize: '0.9rem' }}>
                            {(votes as number).toLocaleString()}
                         </div>

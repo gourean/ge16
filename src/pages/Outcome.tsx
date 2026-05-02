@@ -1,11 +1,22 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { playClick } from '../utils/sfx';
+import { Info } from 'lucide-react';
+import { availableParties } from '../data/parties';
 
 export default function Outcome() {
-  const { seats, playerState, factionNames, factionColors, factionParties, resetGame, electionResults } = useGameStore();
+  const { seats, playerState, factionNames, factionColors, factionParties, resetGame, electionResults, customParties } = useGameStore();
   const navigate = useNavigate();
+  const [activeFactionPop, setActiveFactionPop] = useState<string | null>(null);
+
+  const resolvePartyName = (id: string) => {
+    const custom = customParties.find(cp => cp.id === id);
+    if (custom) return custom.name;
+    const available = availableParties.find(ap => ap.id === id);
+    if (available) return available.name;
+    return id;
+  };
 
   const results = useMemo(() => {
     const counts = { Faction1: 0, Faction2: 0, Faction3: 0, Others: 0 };
@@ -163,8 +174,8 @@ export default function Outcome() {
               <div className="results-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                 {coalitions.map(c => {
                   return (
-                    <div key={c.id} className="flex-between result-item" style={{ fontSize: '1.1rem', padding: '4px 0' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div key={c.id} className="flex-between result-item" style={{ fontSize: '1.1rem', padding: '4px 0', position: 'relative', zIndex: activeFactionPop === c.id ? 100 : 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => { playClick(); setActiveFactionPop(activeFactionPop === c.id ? null : c.id); }}>
                         <div style={{
                           width: '12px',
                           height: '12px',
@@ -175,8 +186,43 @@ export default function Outcome() {
                         <span style={{ color: 'var(--text-primary)', fontWeight: c.id === myCoalition ? 'bold' : 'normal' }}>
                           {factionNames[c.id]}
                         </span>
+                        <Info size={14} style={{ opacity: 0.5 }} />
                       </div>
                       <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-heading)', fontSize: '1.2rem' }}>{c.count}</span>
+
+                      {/* Party Popover */}
+                      {activeFactionPop === c.id && (
+                        <div 
+                          className="glass-panel animate-fade-in" 
+                          style={{ 
+                            position: 'absolute', 
+                            top: '100%', 
+                            left: '0', 
+                            zIndex: 1000,
+                            padding: '0.8rem',
+                            minWidth: '220px',
+                            background: 'rgba(10, 10, 12, 0.98)',
+                            border: `1px solid ${factionColors[c.id]}88`,
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.8)'
+                          }}
+                        >
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px', fontWeight: 'bold' }}>Component Parties</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {(factionParties[c.id as keyof typeof factionParties] || []).map(p => (
+                              <span key={p} style={{ 
+                                fontSize: '0.75rem', 
+                                background: 'rgba(255,255,255,0.05)', 
+                                padding: '2px 8px', 
+                                borderRadius: '4px',
+                                color: 'var(--text-primary)',
+                                border: '1px solid rgba(255,255,255,0.1)'
+                              }}>
+                                {resolvePartyName(p)}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

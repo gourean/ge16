@@ -24,12 +24,10 @@ export const gameEvents: GameEvent[] = [
         type: 'EVENT',
         choices: [
             {
-                text: 'This is a baseless political witch hunt! We deny all allegations of wrongdoing. (Protecting Coalition, -2% Popularity)',
+                text: 'This is a baseless political witch hunt! We deny all allegations of wrongdoing. (+5 Stability, -3% Popularity)',
                 effect: (state, set) => {
-                    // Lose 2 Popularity nationwide, 0 PC cost
-                    const penalty = 2;
+                    const penalty = 3;
                     const myCoal = state.playerState.currentCoalition;
-
                     if (!myCoal) return;
 
                     const newSeats = state.seats.map(s => {
@@ -39,31 +37,21 @@ export const gameEvents: GameEvent[] = [
                     });
 
                     set({
-                        seats: newSeats
+                        seats: newSeats,
+                        playerState: { ...state.playerState, stability: Math.min(100, state.playerState.stability + 5) }
                     });
                 }
             },
             {
-                text: 'We have nothing to hide. I am calling for an immediate and independent inquiry. (-10 Stability, Costs 20 PC)',
-                costPC: 20,
+                text: 'We have nothing to hide. I am calling for an immediate and independent inquiry. (-5 Stability, Costs 10 PC)',
+                costPC: 10,
                 effect: (state, set) => {
-                    // Not protecting the alliance leads to internal instability
-                    const updatedPlayerState = { ...state.playerState, stability: Math.max(0, state.playerState.stability - 10) };
-
-                    // Fallback penalty if store somehow misses it (though UI should prevent)
-                    if (state.playerState.politicalCapital < 20) {
-                        const penalty = 4;
-                        const myCoal = state.playerState.currentCoalition;
-                        if (!myCoal) return;
-                        const newSeats = state.seats.map(s => {
-                            const newTracker = { ...s.popularityTracker };
-                            newTracker[myCoal] = Math.max(0, newTracker[myCoal] - penalty);
-                            return { ...s, popularityTracker: newTracker };
-                        });
-                        set({ seats: newSeats, playerState: { ...updatedPlayerState, politicalCapital: 0 } });
-                    } else {
-                        set({ playerState: updatedPlayerState });
-                    }
+                    set({ 
+                        playerState: { 
+                            ...state.playerState, 
+                            stability: Math.max(0, state.playerState.stability - 5) 
+                        } 
+                    });
                 }
             }
         ]
@@ -75,30 +63,27 @@ export const gameEvents: GameEvent[] = [
         type: 'QUESTION',
         choices: [
             {
-                text: 'We will ensure targeted subsidies reach those who need them most—no Malaysian will be left behind! (Costs 1M)',
-                costFunds: 1000000,
+                text: 'Launch a "Cost of Living" relief fund! (+5% National Pop, Costs RM 2M)',
+                costFunds: 2000000,
                 effect: (state, set) => {
-                    // Gain 1 popularity nationwide
                     const myCoal = state.playerState.currentCoalition;
                     if (!myCoal) return;
                     const newSeats = state.seats.map(s => {
                         const newTracker = { ...s.popularityTracker };
-                        newTracker[myCoal] = Math.min(100, newTracker[myCoal] + 1);
+                        newTracker[myCoal] = Math.min(100, newTracker[myCoal] + 5);
                         return { ...s, popularityTracker: newTracker };
                     });
                     set({ seats: newSeats });
                 }
             },
             {
-                text: 'Global winds are shifting; we must be resilient and face these economic realities honestly. (No Cost)',
+                text: 'Issue a media statement on economic resilience. (-2% National Popularity)',
                 effect: (state, set) => {
-                    // Small popularity penalty
-                    const penalty = 1;
                     const myCoal = state.playerState.currentCoalition;
                     if (!myCoal) return;
                     const newSeats = state.seats.map(s => {
                         const newTracker = { ...s.popularityTracker };
-                        newTracker[myCoal] = Math.max(0, newTracker[myCoal] - penalty);
+                        newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 2);
                         return { ...s, popularityTracker: newTracker };
                     });
                     set({ seats: newSeats });
@@ -115,17 +100,17 @@ export const gameEvents: GameEvent[] = [
         condition: (s) => s.playerState.componentParties.includes('PKR'),
         choices: [
             {
-                text: 'Watch us. Our first 100 days will see a legislative blitz that ends the era of empty talk! (+5% Reformist Popularity, -15 Stability)',
+                text: 'Watch us. Our first 100 days will see a legislative blitz that ends the era of empty talk! (+2% Urban Pop, -8 Stability)',
                 effect: (state, set) => {
                     const myCoal = state.playerState.currentCoalition;
                     const newSeats = state.seats.map(s => {
                         const newTracker = { ...s.popularityTracker };
-                        if (s.demographics.includes('Urban')) newTracker[myCoal] = Math.min(100, newTracker[myCoal] + 2);
+                        if (s.isUrban) newTracker[myCoal] = Math.min(100, newTracker[myCoal] + 2);
                         return { ...s, popularityTracker: newTracker };
                     });
                     set({
                         seats: newSeats,
-                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 15) }
+                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 8) }
                     });
                 }
             },
@@ -186,10 +171,10 @@ export const gameEvents: GameEvent[] = [
         condition: (s) => s.playerState.componentParties.includes('UMNO'),
         choices: [
             {
-                text: 'Everyone is innocent until proven guilty in a court of law. We respect the judicial process. (-15 PC)',
+                text: 'Everyone is innocent until proven guilty. We respect the judicial process. (+5 Stability, -15 PC)',
                 costPC: 15,
-                effect: (_state, _set) => {
-                    // Cost deducted in store
+                effect: (state, set) => {
+                    set({ playerState: { ...state.playerState, stability: Math.min(100, state.playerState.stability + 5) } });
                 }
             },
             {
@@ -230,9 +215,9 @@ export const gameEvents: GameEvent[] = [
                 }
             },
             {
-                text: 'Modesty and moderation are our path. We will maintain the status quo as protected by the law. (-5 Rural Pop, +3 Stability)',
+                text: 'Modesty and moderation are our path. We will maintain the status quo as protected by the law. (-5 Rural Pop, +8 Stability)',
                 effect: (state, set) => {
-                    set({ playerState: { ...state.playerState, stability: Math.min(100, state.playerState.stability + 3) } });
+                    set({ playerState: { ...state.playerState, stability: Math.min(100, state.playerState.stability + 8) } });
                 }
             }
         ]
@@ -306,8 +291,8 @@ export const gameEvents: GameEvent[] = [
         condition: (s) => (s.playerState.componentParties.includes('GPS') || s.playerState.componentParties.includes('GRS')) && s.playerState.manifestoChoices['ma63'] === 'neutral',
         choices: [
             {
-                text: 'Borneo is a priority. We will launch an immediate high-level review to fulfill all MA63 obligations! (+10% Borneo Popularity, -1M Funds)',
-                costFunds: 1000000,
+                text: 'Borneo is a priority. We will launch an immediate high-level review to fulfill all MA63 obligations! (+10% Borneo Popularity, -5 PC)',
+                costPC: 5,
                 effect: (state, set) => {
                     const myCoal = state.playerState.currentCoalition;
                     const newSeats = state.seats.map(s => {
@@ -422,7 +407,7 @@ export const gameEvents: GameEvent[] = [
         condition: (s) => s.playerState.manifestoChoices['ma63'] === 'neutral',
         choices: [
             {
-                text: 'Commit to full MA63 terms (+15% Borneo Popularity, -35 Stability)',
+                text: 'Commit to full MA63 terms (+15% Borneo Popularity, -15 Stability)',
                 effect: (state, set) => {
                     const myCoal = state.playerState.currentCoalition;
                     const newSeats = state.seats.map(s => {
@@ -432,12 +417,12 @@ export const gameEvents: GameEvent[] = [
                     });
                     set({
                         seats: newSeats,
-                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 35) }
+                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 15) }
                     });
                 }
             },
             {
-                text: 'Stay Neutral (-15% Borneo Popularity, -20 Stability)',
+                text: 'Stay Neutral (-15% Borneo Popularity, -10 Stability)',
                 effect: (state, set) => {
                     const myCoal = state.playerState.currentCoalition;
                     const newSeats = state.seats.map(s => {
@@ -447,7 +432,7 @@ export const gameEvents: GameEvent[] = [
                     });
                     set({
                         seats: newSeats,
-                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 20) }
+                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 10) }
                     });
                 }
             }
@@ -464,7 +449,7 @@ export const gameEvents: GameEvent[] = [
                 costFunds: 1000000,
                 costPC: 15,
                 effect: (_state, _set) => {
-                    // Costs deducted in store
+                    // Legal action effects
                 }
             },
             {
@@ -479,6 +464,308 @@ export const gameEvents: GameEvent[] = [
                     set({
                         seats: newSeats,
                         playerState: { ...state.playerState, stability: Math.min(100, state.playerState.stability + 3) }
+                    });
+                }
+            }
+        ]
+    },
+    {
+        id: 'event_tycoon_wage',
+        title: 'The Wage Compromise',
+        description: 'A powerful business tycoon offers a massive "campaign contribution" if your coalition promises to scrap the proposed Minimum Wage hike after the election.',
+        type: 'EVENT',
+        choices: [
+            {
+                text: 'Accept the contribution. We need the war chest. (+5M Funds, -5% Popularity, Scandal Risk)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 5);
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { 
+                            ...state.playerState, 
+                            funds: state.playerState.funds + 5000000,
+                            flags: { ...state.playerState.flags, acceptedTycoonBribe_Wage: true }
+                        }
+                    });
+                }
+            },
+            {
+                text: 'Our workers come first. Reject the offer.',
+                effect: (state, set) => {
+                    // No bonus for rejecting
+                }
+            }
+        ]
+    },
+    {
+        id: 'event_tycoon_land',
+        title: 'The Reclamation Deal',
+        description: 'A property developer offers a significant donation in exchange for "fast-tracking" environmental approvals for a controversial coastal land reclamation project.',
+        type: 'EVENT',
+        choices: [
+            {
+                text: 'Development is progress. Accept the deal. (+5M Funds, -5% Popularity, Scandal Risk)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 5);
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { 
+                            ...state.playerState, 
+                            funds: state.playerState.funds + 5000000,
+                            flags: { ...state.playerState.flags, acceptedTycoonBribe_Land: true }
+                        }
+                    });
+                }
+            },
+            {
+                text: 'We must protect our coastlines. Reject the offer.',
+                effect: (state, set) => {
+                    // No bonus for rejecting
+                }
+            }
+        ]
+    },
+    {
+        id: 'event_tycoon_scandal',
+        title: 'Corruption Scandal Erupts',
+        description: 'Investigative journalists have leaked documents linking your campaign funds to a secret deal with business tycoons.',
+        type: 'EVENT',
+        condition: (s) => (s.playerState.flags['acceptedTycoonBribe_Wage'] || s.playerState.flags['acceptedTycoonBribe_Land']) && Math.random() < 0.50,
+        choices: [
+            {
+                text: 'It was a standard donation! Deny all specific policy links. (-15 Stability, -5% Popularity)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 5);
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 15) }
+                    });
+                }
+            },
+            {
+                text: 'Launch a full internal audit and return the contested funds. (-10 PC, -10 Stability)',
+                costPC: 10,
+                effect: (state, set) => {
+                    set({
+                        playerState: {
+                            ...state.playerState,
+                            stability: Math.max(0, state.playerState.stability - 10)
+                        }
+                    });
+                }
+            }
+        ]
+    },
+    {
+        id: 'event_controversy_3r_race',
+        title: '3R Controversy: Racial Remark',
+        description: 'A senior leader from your coalition has made a "3R" remark concerning racial rights that has sparked massive outcry from minority communities.',
+        type: 'EVENT',
+        choices: [
+            {
+                text: 'Defend your teammate. (+5 Stability, -10% Popularity in minority-heavy areas)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        const minorityWeight = (s.ethnicity?.chinese || 0) + (s.ethnicity?.indian || 0);
+                        if (minorityWeight > 30) {
+                            newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 10);
+                        }
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { ...state.playerState, stability: Math.min(100, state.playerState.stability + 5) }
+                    });
+                }
+            },
+            {
+                text: 'Alienate and reprimand the leader. (-10 Stability, -1% Minority Popularity)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        const minorityWeight = (s.ethnicity?.chinese || 0) + (s.ethnicity?.indian || 0);
+                        if (minorityWeight > 30) {
+                            newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 1);
+                        }
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 10) }
+                    });
+                }
+            }
+        ]
+    },
+    {
+        id: 'event_controversy_3r_religion',
+        title: '3R Controversy: Religious Debate',
+        description: 'A coalition partner from your alliance has triggered a "3R" controversy regarding religious implementation, upsetting the rural heartlands.',
+        type: 'EVENT',
+        choices: [
+            {
+                text: 'Support your coalition partner. (+5 Stability, -10% Rural Popularity)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        if (s.isRural) newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 10);
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { ...state.playerState, stability: Math.min(100, state.playerState.stability + 5) }
+                    });
+                }
+            },
+            {
+                text: 'Clarify and distance. (-10 Stability, -1% Rural Popularity)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        if (s.isRural) newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 1);
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 10) }
+                    });
+                }
+            }
+        ]
+    },
+    {
+        id: 'event_controversy_borneo',
+        title: 'Loose Cannon: MA63 Gaffe',
+        description: 'A prominent leader from your coalition suggested that Borneo states should "be more patient" regarding MA63 implementations and petroleum royalty issues.',
+        type: 'EVENT',
+        choices: [
+            {
+                text: 'Back your coalition leader. (+6 Stability, -10% Borneo Popularity)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        if (s.isBorneo) newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 10);
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { ...state.playerState, stability: Math.min(100, state.playerState.stability + 6) }
+                    });
+                }
+            },
+            {
+                text: 'Immediate apology and reprimand. (-10 Stability, -1% Borneo Popularity)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        if (s.isBorneo) newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 1);
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 10) }
+                    });
+                }
+            }
+        ]
+    },
+    {
+        id: 'custom_spoiler_allegation',
+        title: '"The Spoiler" Allegation',
+        description: 'A viral tweet claims your custom party is a "proxy" funded by the establishment to split the opposition vote. The narrative is gaining traction among urban skeptics.',
+        type: 'QUESTION',
+        condition: (s) => s.playerState.componentParties.some(id => id.startsWith('CUSTOM_')),
+        choices: [
+            {
+                text: 'Deny and release audited accounts. (+5% Urban Popularity, Costs RM 1.0M, 5 PC)',
+                costFunds: 1000000,
+                costPC: 5,
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        if (s.isUrban) newTracker[myCoal] = Math.min(100, newTracker[myCoal] + 5);
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({ seats: newSeats });
+                }
+            },
+            {
+                text: 'Attack the source as a "desperate smear campaign". (+5 Stability, -2% National Popularity)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        newTracker[myCoal] = Math.max(0, newTracker[myCoal] - 2);
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { ...state.playerState, stability: Math.min(100, state.playerState.stability + 5) }
+                    });
+                }
+            }
+        ]
+    },
+    {
+        id: 'custom_celebrity_endorsement',
+        title: 'Celebrity Endorsement',
+        description: 'A popular local influencer with millions of followers offers to join your campaign trail. However, their past "divisive" comments might upset your core stability and alienate conservative voters.',
+        type: 'EVENT',
+        condition: (s) => s.playerState.componentParties.some(id => id.startsWith('CUSTOM_')),
+        choices: [
+            {
+                text: 'Accept: "Let\'s reach the youth!" (+5% Urban Popularity, -10 Stability, -5% Conservative Popularity)',
+                effect: (state, set) => {
+                    const myCoal = state.playerState.currentCoalition;
+                    const newSeats = state.seats.map(s => {
+                        const newTracker = { ...s.popularityTracker };
+                        
+                        // Urban Boost
+                        if (s.isUrban) {
+                            newTracker[myCoal] = Math.min(100, newTracker[myCoal] + 5);
+                        }
+                        
+                        // Conservative Penalty (Proxy: Malay % and Rurality)
+                        const mal = s.ethnicity?.malay || 0;
+                        const conservativeFactor = (mal * 0.008) * (s.isRural ? 1.5 : 0.5);
+                        newTracker[myCoal] = Math.max(0, newTracker[myCoal] - (5 * conservativeFactor));
+                        
+                        return { ...s, popularityTracker: newTracker };
+                    });
+                    set({
+                        seats: newSeats,
+                        playerState: { ...state.playerState, stability: Math.max(0, state.playerState.stability - 10) }
+                    });
+                }
+            },
+            {
+                text: 'Reject: "We focus on policy, not personalities." (+5 Stability)',
+                effect: (state, set) => {
+                    set({
+                        playerState: { ...state.playerState, stability: Math.min(100, state.playerState.stability + 5) }
                     });
                 }
             }

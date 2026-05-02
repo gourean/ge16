@@ -1,11 +1,18 @@
 /**
  * Background Music Manager using HTMLAudioElement.
- * Plays high-quality MP3 tracks hosted on Cloudflare R2.
+ * Supports dual modes:
+ * 1. Web (Default): Loads from Cloudflare R2.
+ * 2. Standalone (VITE_STANDALONE=true): Loads from local public/audio folder.
  */
+
+const IS_STANDALONE = import.meta.env.VITE_STANDALONE === 'true';
+
+const R2_BASE_URL = 'https://pub-566c893fac974012a477dd59a32fb62e.r2.dev/audio';
+
 const TRACK_URLS: Record<string, string> = {
-  campaign: 'https://pub-566c893fac974012a477dd59a32fb62e.r2.dev/audio/campaign.mp3',
-  intro: 'https://pub-566c893fac974012a477dd59a32fb62e.r2.dev/audio/intro.mp3',
-  result: 'https://pub-566c893fac974012a477dd59a32fb62e.r2.dev/audio/result.mp3'
+  campaign: IS_STANDALONE ? './audio/campaign.mp3' : `${R2_BASE_URL}/campaign.mp3`,
+  intro: IS_STANDALONE ? './audio/intro.mp3' : `${R2_BASE_URL}/intro.mp3`,
+  result: IS_STANDALONE ? './audio/result.mp3' : `${R2_BASE_URL}/result.mp3`
 };
 
 class MusicSynthesizer {

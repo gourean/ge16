@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { LogOut, FastForward, Info } from 'lucide-react';
 import { playClick } from '../utils/sfx';
+import { availableParties } from '../data/parties';
 
 export default function NationalDashboard() {
-  const { turn, seats, factionNames, factionParties, factionColors, setExitConfirmationOpen, setGamePhase } = useGameStore();
+  const { turn, seats, factionNames, factionParties, factionColors, setExitConfirmationOpen, setGamePhase, customParties } = useGameStore();
   const [activeFactionPop, setActiveFactionPop] = useState<string | null>(null);
 
   const handleExit = () => {
@@ -48,6 +49,14 @@ export default function NationalDashboard() {
     // For single word names like "Undecided" or "Others", truncate or return as is
     if (name.length > 4) return name.substring(0, 3).toUpperCase();
     return name.toUpperCase();
+  };
+
+  const resolvePartyName = (id: string) => {
+    const custom = customParties.find(cp => cp.id === id);
+    if (custom) return custom.name;
+    const available = availableParties.find(ap => ap.id === id);
+    if (available) return available.name;
+    return id;
   };
   const renderFactionBlock = (factionKey: string, color: string) => {
     const parties = factionParties[factionKey] || [];
@@ -120,7 +129,7 @@ export default function NationalDashboard() {
                   color: 'var(--text-primary)',
                   border: '1px solid rgba(255,255,255,0.1)'
                 }}>
-                  {p}
+                  {resolvePartyName(p)}
                 </span>
               ))}
             </div>

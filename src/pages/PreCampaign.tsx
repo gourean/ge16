@@ -3,12 +3,24 @@ import { useGameStore } from '../store/gameStore';
 import { availableParties, historicalCoalitions } from '../data/parties';
 import type { Party } from '../data/parties';
 import { calculateSynergy, applyFactionsToSeats, distributeOpponents, type DemographicSwing } from '../utils/synergy';
-import { Shield, Target, Users, Play, Plus, Trash2, Shuffle } from 'lucide-react';
+import { Shuffle, Plus, Users, Trash2, Edit2, Shield, Target, Play } from 'lucide-react';
 import { playClick } from '../utils/sfx';
+import PartyCreatorModal from '../components/PartyCreatorModal';
 
 export default function PreCampaign() {
-  const { selectCoalition, setGamePhase, seats, loadInitialSeats, pushNotification, setCheatMode } = useGameStore();
+  const selectCoalition = useGameStore(state => state.selectCoalition);
+  const setGamePhase = useGameStore(state => state.setGamePhase);
+  const seats = useGameStore(state => state.seats);
+  const loadInitialSeats = useGameStore(state => state.loadInitialSeats);
+  const pushNotification = useGameStore(state => state.pushNotification);
+  const setCheatMode = useGameStore(state => state.setCheatMode);
+  const customParties = useGameStore(state => state.customParties);
+  const addCustomParty = useGameStore(state => state.addCustomParty);
+  const updateCustomParty = useGameStore(state => state.updateCustomParty);
+  const deleteCustomParty = useGameStore(state => state.deleteCustomParty);
 
+  const [isCreatorOpen, setIsCreatorOpen] = useState(false);
+  const [editingParty, setEditingParty] = useState<Party | null>(null);
   const [gameMode, setGameMode] = useState<'HISTORICAL' | 'CUSTOM'>('HISTORICAL');
   const [selectedParties, setSelectedParties] = useState<string[]>([]);
   const [allianceName, setAllianceName] = useState('Custom Alliance');
@@ -24,7 +36,10 @@ export default function PreCampaign() {
 
   // Historical coalitions are now imported from data/parties
 
-  const toggleParty = (id: string) => {
+  // Merged list of static + custom parties (defined early so both toggleParty and handleStart can use it)
+  const allAvailableParties = [...availableParties, ...customParties];
+
+  const toggleParty = (id: string, newPartyColor?: string) => {
     setSelectedParties(prev => {
       playClick();
       const isAdding = !prev.includes(id);
@@ -32,14 +47,16 @@ export default function PreCampaign() {
 
       // Auto-set color if none selected and adding first party
       if (isAdding && next.length === 1 && !selectedColor) {
-        const party = availableParties.find(p => p.id === id);
-        if (party) setSelectedColor(party.color);
+        // Use the passed color (for new parties) or look it up
+        const color = newPartyColor || allAvailableParties.find(p => p.id === id)?.color;
+        if (color) setSelectedColor(color);
       }
       return next;
     });
   };
 
   const handleStart = () => {
+   try {
     let finalParties: Party[] = [];
     let customName = allianceName;
     let finalOpponentMode = opponentMode;
@@ -67,11 +84,13 @@ export default function PreCampaign() {
         });
         return;
       }
-      finalParties = availableParties.filter(p => selectedParties.includes(p.id));
+      // Custom mode: filter allAvailableParties (static + custom)
+      finalParties = allAvailableParties.filter(p => selectedParties.includes(p.id));
       if (!customName) customName = 'Custom Alliance';
     }
 
-    const unselectedParties = availableParties.filter(p => !finalParties.find(fp => fp.id === p.id));
+    const selectedIds = new Set(finalParties.map(p => p.id));
+    const unselectedParties = allAvailableParties.filter(p => !selectedIds.has(p.id));
 
     // Refactor the seats to Faction1, 2, 3 based on initial_state.json numbers
     const modifiedSeats = applyFactionsToSeats(seats, finalParties, unselectedParties, finalOpponentMode, explicitSwings, gameMode === 'HISTORICAL', perturbationEnabled ? perturbationSeed : undefined);
@@ -141,17 +160,25 @@ export default function PreCampaign() {
         return darkColors.includes(c.toLowerCase());
       };
 
+      // Helper to get colors that don't clash with existing selections
+      const getNonClashingColors = (parties: any[], exclude: string[]) => {
+        const lowerExclude = exclude.map(c => c.toLowerCase());
+        return parties
+          .map(p => p.color)
+          .filter(c => !isTooDark(c) && !lowerExclude.includes(c.toLowerCase()));
+      };
+
       if (oppFactions.faction2.length > 0) {
-        const validColors = oppFactions.faction2.map(p => p.color).filter(c => !isTooDark(c));
+        const validColors = getNonClashingColors(oppFactions.faction2, [leadColor]);
         f2Color = validColors.length > 0
           ? validColors[Math.floor(Math.random() * validColors.length)]
-          : '#0ea5e9'; // Fallback to sky blue
+          : (leadColor.toLowerCase() === '#0ea5e9' ? '#22c55e' : '#0ea5e9'); // Fallback if clash
       }
       if (oppFactions.faction3.length > 0) {
-        const validColors = oppFactions.faction3.map(p => p.color).filter(c => !isTooDark(c));
+        const validColors = getNonClashingColors(oppFactions.faction3, [leadColor, f2Color]);
         f3Color = validColors.length > 0
           ? validColors[Math.floor(Math.random() * validColors.length)]
-          : '#2563eb'; // Fallback to royal blue
+          : (leadColor.toLowerCase() === '#2563eb' || f2Color.toLowerCase() === '#2563eb' ? '#f59e0b' : '#2563eb'); // Fallback if clash
       }
 
       selectCoalition(customName, finalParties.map(p => p.id), {
@@ -169,10 +196,14 @@ export default function PreCampaign() {
     setCheatMode(localCheatMode);
     playClick();
     setGamePhase('MANIFESTO');
+   } catch (err: any) {
+     console.error('handleStart error:', err);
+     pushNotification({ title: 'Error', message: err?.message || 'Unknown error', type: 'error' });
+   }
   };
 
   // Metrics for custom
-  const currentSelectedPartyObjs = availableParties.filter(p => selectedParties.includes(p.id));
+  const currentSelectedPartyObjs = allAvailableParties.filter(p => selectedParties.includes(p.id));
   const synergyVal = calculateSynergy(currentSelectedPartyObjs);
 
   return (
@@ -303,26 +334,117 @@ export default function PreCampaign() {
             </div>
 
             <div className="party-selection-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1rem' }}>
-              {availableParties.map(p => {
+              {allAvailableParties.map(p => {
                 const isSelected = selectedParties.includes(p.id);
+                const isCustom = p.id.startsWith('CUSTOM_');
                 return (
                   <div
                     key={p.id}
                     onClick={() => toggleParty(p.id)}
-                    className="glass-panel party-card"
                     style={{
                       padding: '1rem', cursor: 'pointer', textAlign: 'center',
                       background: isSelected ? p.color : 'rgba(255,255,255,0.02)',
-                      borderColor: isSelected ? 'transparent' : 'var(--border-glass)'
+                      borderColor: isSelected ? 'transparent' : (isCustom ? 'var(--accent-teal)' : 'var(--border-glass)'),
+                      position: 'relative',
+                      minHeight: '100px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      transition: 'all 0.3s'
                     }}
+                    className={`glass-panel party-card ${isCustom ? 'pulse-glow' : ''} ${isSelected ? 'selected' : ''}`}
                   >
+                    {isCustom && (
+                      <>
+                        <div style={{ position: 'absolute', top: '-8px', right: '-8px', background: 'var(--accent-teal)', color: 'black', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', zIndex: 5 }}>CUSTOM</div>
+                        <button 
+                          className="edit-party-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingParty(p);
+                            setIsCreatorOpen(true);
+                            playClick();
+                          }}
+                          style={{
+                            position: 'absolute',
+                            bottom: '10px',
+                            right: '10px',
+                            background: 'rgba(255,255,255,0.15)',
+                            border: '1px solid rgba(255,255,255,0.25)',
+                            borderRadius: '50%',
+                            width: '34px',
+                            height: '34px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            cursor: 'pointer',
+                            opacity: 1,
+                            transition: 'all 0.2s',
+                            zIndex: 20,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                          }}
+                          className="action-btn-hover"
+                          title="Edit Party"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                      </>
+                    )}
                     <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.5rem' }}>{p.name}</div>
                     <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{p.ideology}</div>
                   </div>
                 )
               })}
+
+              <div
+                onClick={() => { setIsCreatorOpen(true); playClick(); }}
+                className="glass-panel party-card"
+                style={{
+                  padding: '1rem', cursor: 'pointer', textAlign: 'center',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '2px dashed var(--border-glass)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  color: 'var(--text-muted)'
+                }}
+              >
+                <Plus size={24} />
+                <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Create Party</div>
+              </div>
             </div>
           </div>
+        )}
+
+        {isCreatorOpen && (
+          <PartyCreatorModal 
+            initialParty={editingParty || undefined}
+            onClose={() => {
+              setIsCreatorOpen(false);
+              setEditingParty(null);
+            }} 
+            onSave={(p) => {
+              if (editingParty) {
+                updateCustomParty(p);
+                pushNotification({ title: 'Party Updated', message: `${p.name} has been updated.`, type: 'info' });
+              } else {
+                addCustomParty(p);
+                toggleParty(p.id, p.color); // Auto-select after creation with explicit color
+                pushNotification({ title: 'Party Created', message: `${p.name} is ready for election!`, type: 'success' });
+              }
+            }} 
+            onDelete={(id) => {
+              const partyName = allAvailableParties.find(p => p.id === id)?.name || 'Party';
+              deleteCustomParty(id);
+              if (selectedParties.includes(id)) {
+                toggleParty(id); // Deselect if selected
+              }
+              pushNotification({ title: 'Party Deleted', message: `${partyName} has been removed.`, type: 'info' });
+            }}
+          />
         )}
 
         <div className="swings-section" style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-glass)', marginBottom: '2rem' }}>

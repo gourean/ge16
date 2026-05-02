@@ -1,4 +1,4 @@
-import { type Party, historicalCoalitions } from '../data/parties';
+import { type Party, historicalCoalitions, availableParties } from '../data/parties';
 import type { Seat } from '../store/gameStore';
 import { manifestoItems } from '../data/manifesto';
 import { normalizePopularity } from './campaignUtils';
@@ -243,6 +243,9 @@ export function distributeOpponents(
   opponentType: '1v1' | '3-corner'
 ): { faction2: Party[], faction3: Party[] } {
   
+  const faction2: Party[] = [];
+  const faction3: Party[] = [];
+
   if (opponentType === '1v1') {
     return {
       faction2: unselectedParties,
@@ -250,20 +253,16 @@ export function distributeOpponents(
     };
   }
 
-  // Pre-define buckets based on historical alignments
+  // Identify historical buckets
   const phBucket = unselectedParties.filter(p => historicalCoalitions[0].parties.includes(p.id));
   const pnBucket = unselectedParties.filter(p => historicalCoalitions[1].parties.includes(p.id));
   const bnBucket = unselectedParties.filter(p => historicalCoalitions[2].parties.includes(p.id));
 
-  const faction2: Party[] = [];
-  const faction3: Party[] = [];
-
-  // Logic to keep historical groups together and assign them to F2/F3
+  // Determine major alignments for F2/F3
   if (phBucket.length > 0 && pnBucket.length > 0) {
     // Case: Player is BN (or custom without major PN/PH overlap)
     faction2.push(...pnBucket);
     faction3.push(...phBucket);
-    // BN parties remaining? (shouldn't happen if player is BN, but for custom...)
     faction2.push(...bnBucket); 
   } else if (phBucket.length > 0 && bnBucket.length > 0) {
     // Case: Player is PN
@@ -275,20 +274,22 @@ export function distributeOpponents(
     faction2.push(...pnBucket);
     faction3.push(...bnBucket);
     faction3.push(...phBucket);
-  } else {
-    // Custom/Edge case: Fallback to ideological split
-    for (const party of unselectedParties) {
-      if (['Conservative', 'Islamist'].includes(party.ideology)) faction2.push(party);
-      else faction3.push(party);
-    }
-    return { faction2, faction3 };
   }
 
-  // We no longer distribute 'othersBucket' into the major factions (like PEJUANG/GTA).
-  // They will remain independent and contribute to the "Others" category in the dashboard.
+  // Catch-all: Any party in unselectedParties NOT yet assigned to F2 or F3 (including Custom Parties)
+  const assignedIds = new Set([...faction2, ...faction3].map(p => p.id));
+  const leftovers = unselectedParties.filter(p => !assignedIds.has(p.id));
+
+  leftovers.forEach(party => {
+    // Assign leftovers (Custom Parties, Independents) based on ideology
+    if (['Conservative', 'Islamist', 'Nationalist'].includes(party.ideology)) {
+      faction2.push(party);
+    } else {
+      faction3.push(party);
+    }
+  });
   
   return { faction2, faction3 };
-
 }
 
 /**
@@ -319,10 +320,10 @@ export function applyFactionsToSeats(
   const syn2 = calculateSynergy(faction2, isHistorical);
   const syn3 = calculateSynergy(faction3, isHistorical);
 
-  // Get party ID sets for fast lookup
-  const f1Ids = new Set(faction1.map(p => p.id));
-  const f2Ids = new Set(faction2.map(p => p.id));
-  const f3Ids = new Set(faction3.map(p => p.id));
+  const allParties = [...playerParties, ...unselectedParties];
+  const f1Ids = new Set(playerParties.map(p => p.id));
+  const f2Ids = new Set(oppFactions.faction2.map(p => p.id));
+  const f3Ids = new Set(oppFactions.faction3.map(p => p.id));
 
   // Initialize seeded PRNG for perturbation
   const rng = perturbationSeed != null ? mulberry32(perturbationSeed) : null;
@@ -331,8 +332,8 @@ export function applyFactionsToSeats(
     const pp = seat.partyPopularity;
     
     if (!pp) {
-      // Fallback for seats without partyPopularity (shouldn't happen with v2 data)
-      console.warn(`Seat ${seat.id} missing partyPopularity, using legacy fallback`);
+      // Fallback for seats without partyPopularity
+      console.warn(`Seat ${seat.id} missing partyPopularity`);
       return {
         ...seat,
         basePopularity: { Faction1: 33, Faction2: 33, Faction3: 33, Others: 1 },
@@ -340,20 +341,42 @@ export function applyFactionsToSeats(
       };
     }
 
-    // Sum party popularity for each faction
+    // Sum party popularity for each faction with transfer logic
     let raw1 = 0, raw2 = 0, raw3 = 0, rawOthers = 0;
 
     for (const [partyId, pct] of Object.entries(pp)) {
       const val = pct as number;
+      
+      // 1. Calculate how much of this specific party's vote is drained by custom parties
+      let totalDrain = 0;
+      const isOthersPool = !availableParties.find(p => p.id === partyId);
+      
+      allParties.forEach(p => {
+        if (p.voterTransfer) {
+          const transferPct = isOthersPool ? (p.voterTransfer['__OTHERS__'] || 0) : (p.voterTransfer[partyId] || 0);
+          if (transferPct > 0) {
+            const amount = val * transferPct;
+            totalDrain += amount;
+            // Add this amount to the faction the custom party belongs to
+            if (f1Ids.has(p.id)) raw1 += amount;
+            else if (f2Ids.has(p.id)) raw2 += amount;
+            else if (f3Ids.has(p.id)) raw3 += amount;
+            else rawOthers += amount; // Safety net: Add to others if not in a major faction
+          }
+        }
+      });
+
+      // 2. Add remaining vote to the "Real" party's faction
+      const remainingVal = Math.max(0, val - totalDrain);
       if (f1Ids.has(partyId)) {
-        raw1 += val;
+        raw1 += remainingVal;
       } else if (f2Ids.has(partyId)) {
-        raw2 += val;
+        raw2 += remainingVal;
       } else if (f3Ids.has(partyId)) {
-        raw3 += val;
+        raw3 += remainingVal;
       } else {
-        // Party not in any faction (minor parties, independents, etc.)
-        rawOthers += val;
+        // Party not in any faction or it's an "Other" party
+        rawOthers += remainingVal;
       }
     }
 
