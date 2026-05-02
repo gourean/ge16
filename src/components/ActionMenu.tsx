@@ -10,7 +10,7 @@ import {
   X,
   Target
 } from 'lucide-react';
-import { getSeatsInSameState, getThematicManifestoEffect } from '../utils/campaignUtils';
+import { getSeatsInSameState } from '../utils/campaignUtils';
 import { playClick, playDayEnd, playError } from '../utils/sfx';
 
 type ActionType = 'CERAMAH' | 'SMEAR' | 'SOCIAL_MEDIA' | 'GROUND_WAR' | 'CYBER_ATTACK' | 'MANIFESTO_THEMATIC' | 'FUNDRAISING' | 'POLITICAL_LOBBYING';
@@ -18,7 +18,7 @@ type ActionType = 'CERAMAH' | 'SMEAR' | 'SOCIAL_MEDIA' | 'GROUND_WAR' | 'CYBER_A
 export default function ActionMenu({ activeSeatId }: { activeSeatId: string | null }) {
   const [open, setOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const { 
     playAction, nextTurn, playerState, seats, actionsRemaining, 
@@ -85,8 +85,8 @@ export default function ActionMenu({ activeSeatId }: { activeSeatId: string | nu
       const stateSeatIds = stateSeats.map(s => s.id);
 
       // Manifesto category for thematic launch (choose one randomly or rotate)
-      const categories: ("Economy" | "Identity" | "Institutional" | "Infrastructure" | "Labor")[] = ["Economy", "Identity", "Labor"];
-      const selectedCategory = categories[Math.floor(Math.random() * categories.length)];
+      // const categories: ("Economy" | "Identity" | "Institutional" | "Infrastructure" | "Labor")[] = ["Economy", "Identity", "Labor"];
+      // const selectedCategory = categories[Math.floor(Math.random() * categories.length)];
 
       return currentSeats.map(s => {
         const isSelected = activeSeatId && (s.id === activeSeatId || s.id.replace('.', '') === activeSeatId);

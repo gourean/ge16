@@ -496,7 +496,7 @@ export const gameEvents: GameEvent[] = [
             },
             {
                 text: 'Our workers come first. Reject the offer.',
-                effect: (state, set) => {
+                effect: (_state, _set) => {
                     // No bonus for rejecting
                 }
             }
@@ -529,7 +529,7 @@ export const gameEvents: GameEvent[] = [
             },
             {
                 text: 'We must protect our coastlines. Reject the offer.',
-                effect: (state, set) => {
+                effect: (_state, _set) => {
                     // No bonus for rejecting
                 }
             }

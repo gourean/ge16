@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, Users, Palette, Info, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { X, Save, Users, Palette, Trash2 } from 'lucide-react';
 import { availableParties, type Party, type Ideology, type DemographicFocus } from '../data/parties';
 import { playClick } from '../utils/sfx';
 
