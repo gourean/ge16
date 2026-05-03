@@ -1,5 +1,8 @@
 # Changelog
 
+## \[0.6.1-beta] - 2026-05-03
+* Historical alliance corrections and UI refinements.
+
 ## \[0.6.0-beta] - 2026-05-02 — "The Strategy \& Scandal Update"
 
 ### Added
