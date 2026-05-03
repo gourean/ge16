@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { availableParties, historicalCoalitions } from '../data/parties';
 import type { Party } from '../data/parties';
 import { calculateSynergy, applyFactionsToSeats, distributeOpponents, type DemographicSwing } from '../utils/synergy';
-import { Shuffle, Plus, Users, Trash2, Edit2, Shield, Target, Play, Map, Zap } from 'lucide-react';
+import { Shuffle, Plus, Users, Trash2, Edit2, Shield, Target, Play } from 'lucide-react';
 import { playClick } from '../utils/sfx';
 import PartyCreatorModal from '../components/PartyCreatorModal';
 
