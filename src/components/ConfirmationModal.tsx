@@ -74,11 +74,15 @@ export default function ConfirmationModal() {
           You are about to leave the current simulation. All unsaved progress will be permanently lost.
         </p>
 
-        <div className="confirm-actions" style={{ display: 'flex', gap: '1rem' }}>
+        <div className="confirm-actions" style={{ 
+          display: 'flex', 
+          gap: '1rem',
+          width: '100%'
+        }}>
           <button
             className="glass-button stay-btn"
             onClick={handleCancel}
-            style={{ flex: 1, padding: '1rem' }}
+            style={{ flex: 1, padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             Stay
           </button>
@@ -90,7 +94,10 @@ export default function ConfirmationModal() {
               padding: '1rem', 
               background: 'rgba(255, 82, 82, 0.2)', 
               color: '#ff5252', 
-              borderColor: 'rgba(255, 82, 82, 0.4)' 
+              borderColor: 'rgba(255, 82, 82, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
             Exit
@@ -101,13 +108,15 @@ export default function ConfirmationModal() {
       <style>{`
         @media (max-width: 768px) {
           .confirm-modal-overlay {
-            padding: 0.5rem !important;
-            padding-top: env(safe-area-inset-top, 0px) !important;
-            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+            padding: 0.75rem !important;
+            padding-top: env(safe-area-inset-top, 0.75rem) !important;
+            padding-bottom: env(safe-area-inset-bottom, 0.75rem) !important;
           }
           .confirm-modal-content {
             padding: 1.5rem !important;
-            max-height: 80vh !important;
+            width: 95% !important;
+            max-width: 360px !important;
+            max-height: 85vh !important;
           }
           .confirm-icon-wrapper {
             width: 48px !important;
@@ -115,19 +124,33 @@ export default function ConfirmationModal() {
             margin-bottom: 1rem !important;
           }
           .confirm-title {
-            font-size: 1.2rem !important;
+            font-size: 1.25rem !important;
           }
           .confirm-message {
             font-size: 0.85rem !important;
             margin-bottom: 1.5rem !important;
           }
+          .confirm-actions {
+            flex-direction: row !important;
+            gap: 0.75rem !important;
+          }
           .stay-btn, .exit-btn {
-            padding: 0.7rem !important;
-            font-size: 0.9rem !important;
+            padding: 1rem 0.5rem !important;
+            font-size: 1rem !important;
+            flex: 1 !important;
+            min-width: 0;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            height: 3.5rem !important; /* Force equal height */
+          }
+          .exit-btn {
+            background: rgba(255, 82, 82, 0.3) !important;
           }
         }
       `}</style>
     </div>
+
 
   );
 }

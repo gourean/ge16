@@ -253,35 +253,60 @@ export function distributeOpponents(
     };
   }
 
-  // Identify historical buckets
-  const phBucket = unselectedParties.filter(p => historicalCoalitions[0].parties.includes(p.id));
-  const pnBucket = unselectedParties.filter(p => historicalCoalitions[1].parties.includes(p.id));
-  const bnBucket = unselectedParties.filter(p => historicalCoalitions[2].parties.includes(p.id));
+  // Identify major buckets by coalition ID
+  const getBucket = (coalId: string) => {
+    const coal = historicalCoalitions.find(c => c.id === coalId);
+    return unselectedParties.filter(p => coal?.parties.includes(p.id));
+  };
+
+  const phBucket = getBucket('PH');
+  const pnBucket = getBucket('PN');
+  const bnBucket = getBucket('BN');
 
   // Determine major alignments for F2/F3
-  if (phBucket.length > 0 && pnBucket.length > 0) {
-    // Case: Player is BN (or custom without major PN/PH overlap)
+  // Standard priority: PH, PN, BN are the Big Three
+  if (phBucket.length > 0 && pnBucket.length > 0 && bnBucket.length > 0) {
+    // Case: Player is NOT in any of the Big Three (e.g. they are GPS or Custom)
+    // We pick the two biggest rivals: PN and PH
     faction2.push(...pnBucket);
     faction3.push(...phBucket);
+    // BN is also an opponent, we'll lump it into F2 (Conservative side)
     faction2.push(...bnBucket); 
+  } else if (phBucket.length > 0 && pnBucket.length > 0) {
+    // Case: Player is BN (or aligned)
+    faction2.push(...pnBucket);
+    faction3.push(...phBucket);
   } else if (phBucket.length > 0 && bnBucket.length > 0) {
     // Case: Player is PN
     faction2.push(...bnBucket);
     faction3.push(...phBucket);
-    faction2.push(...pnBucket);
   } else if (pnBucket.length > 0 && bnBucket.length > 0) {
     // Case: Player is PH
     faction2.push(...pnBucket);
     faction3.push(...bnBucket);
-    faction3.push(...phBucket);
+  } else {
+    // Catch-all for other combinations
+    if (pnBucket.length > 0) faction2.push(...pnBucket);
+    if (bnBucket.length > 0) (faction2.length === 0 ? faction2 : faction3).push(...bnBucket);
+    if (phBucket.length > 0) (faction3.length === 0 ? faction3 : faction2).push(...phBucket);
   }
 
-  // Catch-all: Any party in unselectedParties NOT yet assigned to F2 or F3 (including Custom Parties)
+  // Handle leftovers (Custom Parties, smaller coalitions like GPS, GRS, Warisan, GTA)
   const assignedIds = new Set([...faction2, ...faction3].map(p => p.id));
   const leftovers = unselectedParties.filter(p => !assignedIds.has(p.id));
 
   leftovers.forEach(party => {
-    // Assign leftovers (Custom Parties, Independents) based on ideology
+    // We only force leftovers into F2/F3 if they are "major" enough or if F2/F3 are thin.
+    // However, to satisfy the "Others" bucket in the results, we can leave some unassigned.
+    // But for a 3-cornered fight to feel full, we group based on ideology ONLY IF they are not part of a known minor coalition
+    
+    // Keep specific parties in the 'Others' bucket as requested (non-playable/standalone)
+    const stayAsOthers = ['WARISAN', 'PEJUANG', 'KDM'];
+    if (stayAsOthers.includes(party.id)) {
+      return;
+    }
+
+    // Truly leftover/custom parties get grouped based on ideology
     if (['Conservative', 'Islamist', 'Nationalist'].includes(party.ideology)) {
       faction2.push(party);
     } else {
